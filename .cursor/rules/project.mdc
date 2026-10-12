@@ -1,0 +1,16 @@
+---
+description: FireWatch AI scope, evidence and implementation conventions
+alwaysApply: true
+---
+
+- Explain development changes in Portuguese; UI and code identifiers are English.
+- Read README.md and docs/ARCHITECTURE.md before changing the workflow.
+- This is an educational fire-evidence prototype. Do not add claims of validated diagnosis, calibrated probability or propagation prediction.
+- Unknown/None must remain explicit. Evidence provenance must distinguish synthetic, reported and measured data.
+- The deterministic reference components and Safety Gate cannot be overridden by LLM proposals.
+- Never invent evidence IDs or describe mocked LLM calls as real API validation.
+- Critic revisions are limited to one. API attempts are limited to two per call.
+- Log actual events, tool execution and fallback. Never log API keys or full provider exception messages.
+- GUI updates occur on the Tk thread via the queue poller. SQLite connections are local to each operation.
+- Make small changes, explain why, and run python -m unittest discover -s tests -v.
+- Document GUI inspection separately from automatic tests.
