@@ -8,8 +8,9 @@ from tkinter import filedialog, messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 
 from .evaluation import evaluate
-from .models import Evidence, HumanReview, Incident
+from .models import Evidence, HumanReview, Incident, SharedState
 from .pipeline import Pipeline
+from .presentation import agent_summary
 from .scenarios import SCENARIOS, get_scenario
 from .storage import Store
 
@@ -23,7 +24,7 @@ class FireWatchApp:
         self.busy = False
         self.messages = queue.Queue()
         self.fields = {}
-        root.title("FireWatch AI | Evidence & Human Review")
+        root.title("FireWatch AI — V1 | Traceable Workflow")
         root.geometry("1120x760")
         root.minsize(760, 560)
         root.configure(bg="#101d30")
@@ -39,7 +40,7 @@ class FireWatchApp:
         header = tk.Frame(root, bg="#101d30", padx=20, pady=14)
         header.pack(fill="x")
         ttk.Label(header, text="FIREWATCH AI", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(header, text="Fire indicators • Traceable evidence • Human review", style="Hero.TLabel").pack(anchor="w")
+        ttk.Label(header, text="V1 • Specialized components • Shared state • Human review", style="Hero.TLabel").pack(anchor="w")
         tk.Label(header, text="EDUCATIONAL PROTOTYPE  |  Synthetic examples  |  No independent fire diagnosis",
                  bg="#101d30", fg="#ffcb77", font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 0))
         cards = tk.Frame(root, bg="#edf1f5", padx=15, pady=10)
@@ -58,10 +59,10 @@ class FireWatchApp:
         self.tabs.add(self.incident_tab, text="Incident")
         self.build_form()
         self.outputs = {}
-        for name in ("Multi-Agent Analysis", "Evidence", "Safety & Human Gate", "Explainable Report", "Agent Trace", "Evaluation"):
+        for name in ("Multi-Agent Analysis", "Evidence", "Safety & Human Gate", "Explainable Report", "Agent Trace", "Shared State", "Evaluation"):
             tab = ttk.Frame(self.tabs)
             short_labels = {"Multi-Agent Analysis": "Agents", "Safety & Human Gate": "Safety / Review",
-                            "Explainable Report": "Report", "Agent Trace": "Trace"}
+                            "Explainable Report": "Report", "Agent Trace": "Trace", "Shared State": "State"}
             self.tabs.add(tab, text=short_labels.get(name, name))
             if name == "Safety & Human Gate":
                 self.build_review(tab)
@@ -265,10 +266,7 @@ class FireWatchApp:
         self.card_vars["Priority"].set(result.risk.level)
         self.card_vars["Human review"].set("REQUIRED" if result.safety.human_review_required else "OPTIONAL")
         self.card_vars["Mode"].set(result.mode.upper())
-        analysis = {"plan": result.plan.model_dump(), "assessment": result.assessment.model_dump(),
-                    "risk": result.risk.model_dump(), "proposal": result.proposal.model_dump(),
-                    "critic": result.critic.model_dump(), "revisions": result.revisions, "errors": result.errors}
-        self.set_output("Multi-Agent Analysis", json.dumps(analysis, indent=2, ensure_ascii=False))
+        self.set_output("Multi-Agent Analysis", agent_summary(result))
         evidence = {"records": [e.model_dump(mode="json") for e in result.incident.evidence],
                     "analysis": result.evidence_result.model_dump()}
         self.set_output("Evidence", json.dumps(evidence, indent=2, ensure_ascii=False))
@@ -282,6 +280,8 @@ class FireWatchApp:
         content = {"run_id": self.current.run_id, "safety": self.current.safety.model_dump(),
                    "human_reviews": [r.model_dump(mode="json") for r in self.store.reviews(self.current.run_id)]}
         self.set_output("Safety & Human Gate", json.dumps(content, indent=2, ensure_ascii=False))
+        state = SharedState.from_run(self.current, self.store.reviews(self.current.run_id))
+        self.set_output("Shared State", "COMPLETED RUN SNAPSHOT — not a live execution graph\n\n" + state.model_dump_json(indent=2))
 
     def save_review(self, decision):
         if not self.current:

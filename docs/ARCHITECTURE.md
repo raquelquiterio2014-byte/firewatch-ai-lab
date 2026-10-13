@@ -45,3 +45,7 @@ JSONL is an additional trace export after database commit. If disk writing fails
 Long analysis/evaluation jobs run in a worker thread. Workers never update Tk widgets; they put results on a queue polled by the UI thread. Analyze and Evaluate are disabled while a job is running. Database operations open, commit and close their own connection in the calling thread.
 
 The LLM adapter has a fixed Google API host, configurable model name, environment-only credentials, two attempts maximum and safe error reporting. API output passes through Pydantic. Mocked tests do not establish live API compatibility, calibrated reliability or resistance to all prompt injection.
+
+## V1 state presentation
+
+`SharedState.from_run` validates detached copies of completed outputs and review records. This view is derived from the existing run snapshot; it does not replace the coordinator or represent a live message bus. Agents shows readable results and modes from actual events; Trace retains raw event detail. State includes later human-review records without rewriting the initial Safety Gate result.

@@ -1,5 +1,9 @@
 # Validation record — 12 October 2026
 
+## V1 increment
+
+Package 1.1.0 adds a readable Agents view and a typed completed-run State view. The local suite has **25 passing tests**, including three new checks for preservation of unknowns, separation of snapshot copies and retention of Safety Gate reasons after human approval. The original backend passed remote CI on Python 3.11 and 3.12: https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38315261731. V1 GUI rendering still requires Windows inspection.
+
 ## Automated checks
 
 The development environment uses Python 3.12 and Pydantic 2.13.5. Run `python -m unittest discover -s tests -v` and `python main.py --evaluate` to reproduce the checks.
@@ -19,7 +23,7 @@ Tkinter is importable in the development environment, but a graphical display is
 On Windows:
 
 1. Launch `run_gui.bat` or `python main.py`.
-2. Inspect at 1366×768 and a larger resolution; resize to the minimum supported window. Confirm form scrolling, readable cards and access to all seven tabs.
+2. Inspect at 1366×768 and a larger resolution; resize to the minimum supported window. Confirm form scrolling, readable cards and access to all eight tabs.
 3. Run scenario 03. Expect STRONG_INDICATION, HIGH and REQUIRED human review.
 4. Run scenario 01. Expect NO_INDICATION, LOW and OPTIONAL review; confirm the report does not claim safety.
 5. Enter humidity 101 or negative wind. Confirm input is rejected before analysis.

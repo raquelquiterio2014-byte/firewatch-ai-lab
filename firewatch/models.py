@@ -152,3 +152,37 @@ class HumanReview(Model):
         if not value.strip():
             raise ValueError("Reviewer and comment must not be blank")
         return value.strip()
+
+
+class SharedState(Model):
+    """Read-only-by-convention snapshot of completed outputs, not a live agent bus."""
+    run_id: str
+    execution_mode: Literal["deterministic", "llm", "fallback"]
+    incident: Incident
+    planner: Plan
+    evidence: EvidenceResult
+    fire_assessment: Assessment
+    risk_exposure: Risk
+    decision: Proposal
+    critic: CriticReview
+    safety_gate: SafetyResult
+    revision_count: int = Field(ge=0, le=1)
+    errors: list[str]
+    human_reviews: list[HumanReview] = Field(default_factory=list)
+
+    @classmethod
+    def from_run(cls, result, reviews=()):
+        # Validate serialized copies so editing this view cannot alter persisted results.
+        return cls.model_validate({
+            "run_id": result.run_id, "execution_mode": result.mode,
+            "incident": result.incident.model_dump(mode="json"),
+            "planner": result.plan.model_dump(mode="json"),
+            "evidence": result.evidence_result.model_dump(mode="json"),
+            "fire_assessment": result.assessment.model_dump(mode="json"),
+            "risk_exposure": result.risk.model_dump(mode="json"),
+            "decision": result.proposal.model_dump(mode="json"),
+            "critic": result.critic.model_dump(mode="json"),
+            "safety_gate": result.safety.model_dump(mode="json"),
+            "revision_count": result.revisions, "errors": list(result.errors),
+            "human_reviews": [review.model_dump(mode="json") for review in reviews],
+        })

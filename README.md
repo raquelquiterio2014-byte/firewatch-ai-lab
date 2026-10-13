@@ -1,10 +1,14 @@
-# FireWatch AI
+# FireWatch AI — V1
 
 **Educational multi-agent prototype for fire-indicator analysis, evidence traceability and human review.**
 
 Developed by **Raquel Cruz** as a separate practice project for learning Cursor before the Open Agent Hackathon 2026. Inspired by the evidence, critic and human-gate structure of ResilientCity AI.
 
 FireWatch evaluates **supplied observations** about vegetation and the urban–vegetation interface. It distinguishes fire indications, contextual priority and evidence gaps. It does not independently diagnose a fire, forecast propagation, issue operational commands or establish that an area is safe.
+
+## V1 — From a Form to a Traceable Workflow
+
+This milestone adds readable component summaries in **Agents** and a typed completed-run snapshot in **State**, including human-review records. Package version: **1.1.0**. The V0 built locally in Cursor may differ from this repository: use [the V1 Cursor prompt](docs/V1_CURSOR_PROMPT.md) to evolve that code without assuming identical files.
 
 ## What is implemented
 
@@ -64,6 +68,7 @@ Select **Use Gemini (optional)** in the GUI. Model availability and structured-o
 | Safety / Review | Mandatory review reasons and reviewer/comment records |
 | Report | Explainable TXT report and JSON export |
 | Trace | Actual events linked to the current run ID |
+| State | Validated snapshot of completed component outputs and recorded human reviews |
 | Evaluation | Ten deterministic synthetic cases and expected-versus-actual fields |
 
 The GUI accepts one evidence record per new manual analysis. The backend supports multiple evidence records. Normalized form fields drive the reference rules: free text is **not automatically extracted**. Conflict flags and provenance are entered declarations, not independent verification.
@@ -84,7 +89,7 @@ Tests cover invalid values, unknowns, timestamp validation, stale/conflicting re
 
 Validation status and limitations: [docs/VALIDATION.md](docs/VALIDATION.md). Architecture and rules: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Cursor exercises: [docs/CURSOR_WORKFLOW.md](docs/CURSOR_WORKFLOW.md).
 
-The workflow is included in source; a successful local test is not evidence that GitHub Actions has run.
+The original implementation passed [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38315261731). V1 adds three tests for state preservation and readable summaries; the local suite now has 25 passing tests. Remote CI must be checked for the V1 commit separately.
 
 ## Rule interpretation
 
