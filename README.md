@@ -2,13 +2,13 @@
 
 **Educational multi-agent prototype for fire-indicator analysis, evidence traceability and human review.**
 
-Developed by **Raquel Cruz** as a separate practice project for learning Cursor before the Open Agent Hackathon 2026. Inspired by the evidence, critic and human-gate structure of ResilientCity AI.
+Developed by **Raquel Cruz** as an educational project inspired by the evidence, critic and human-gate structure of ResilientCity AI. **Windows and PyCharm are the chosen environment for local execution and validation.**
 
 FireWatch evaluates **supplied observations** about vegetation and the urban–vegetation interface. It distinguishes fire indications, contextual priority and evidence gaps. It does not independently diagnose a fire, forecast propagation, issue operational commands or establish that an area is safe.
 
 ## V1 — From a Form to a Traceable Workflow
 
-This milestone adds readable component summaries in **Agents** and a typed completed-run snapshot in **State**, including human-review records. Package version: **1.1.0**. The V0 built locally in Cursor may differ from this repository: use [the V1 Cursor prompt](docs/V1_CURSOR_PROMPT.md) to evolve that code without assuming identical files.
+This milestone adds readable component summaries in **Agents** and a typed completed-run snapshot in **State**, including human-review records. Package version: **1.1.0**. The earlier local V0 may differ from this repository. Download or clone the current version into a separate folder and open the project in PyCharm, preserving any previous local work.
 
 ## What is implemented
 
@@ -20,7 +20,7 @@ This milestone adds readable component summaries in **Agents** and a typed compl
 - SQLite run snapshots, evidence records, saved-run history and real JSONL trace events.
 - TXT report and JSON run/evaluation export.
 - Optional Gemini adapter with structured outputs, bounded retries and explicit fallback.
-- Windows launcher, Cursor project rules and a GitHub Actions workflow.
+- Windows launcher and a GitHub Actions workflow.
 
 ## Two execution modes
 
@@ -32,15 +32,17 @@ This milestone adds readable component summaries in **Agents** and a typed compl
 
 The orchestrator is implemented in Python; **LangGraph is not yet integrated**. There is no camera, sensor ingestion, automatic contradiction extraction, MCP server, geospatial layer or live fire-data integration in this release.
 
-## Run on Windows
+## Run on Windows with PyCharm
 
-Install Python 3.11 or later with Tkinter support. Extract or clone the project, open the folder in Cursor, then use its terminal:
+Install Python 3.11 or later with Tkinter support. Download or clone the current repository, extract it if necessary, and open the folder containing `main.py` as a project in PyCharm. Run the following commands in the PyCharm terminal from that project folder:
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe main.py
 ```
+
+After creating the environment, configure the PyCharm project interpreter to use `.venv\Scripts\python.exe`. Run `main.py` with the working directory set to the project folder, so `data/` and exports are created in the intended location.
 
 Alternatively, after installing requirements, double-click `run_gui.bat`. It uses the local `.venv` if present, otherwise the Windows Python launcher.
 
@@ -87,9 +89,15 @@ The evaluation uses deterministic mode even if a key exists. Use `--scenario 3 -
 
 Tests cover invalid values, unknowns, timestamp validation, stale/conflicting records, fire indications and exposure, bounded revision, invented evidence IDs, removal of required review, fallback, run persistence and worker-thread database access. LLM tests use **offline test doubles**, not a real Gemini invocation.
 
-Validation status and limitations: [docs/VALIDATION.md](docs/VALIDATION.md). Architecture and rules: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Cursor exercises: [docs/CURSOR_WORKFLOW.md](docs/CURSOR_WORKFLOW.md).
+### Local visual validation in PyCharm
 
-The original implementation passed [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38315261731). V1 adds three tests for state preservation and readable summaries; the local suite now has 25 passing tests. Remote CI must be checked for the V1 commit separately.
+Start with **Use Gemini (optional)** unchecked. Analyze **03 — Flames near people** and confirm `STRONG_INDICATION`, `HIGH` and mandatory human review. Inspect **Agents**, **State** and **Trace**, then record a human review, export a report and reload the saved run after restarting the app. Check all eight tabs and form scrolling at your actual Windows resolution.
+
+Automated tests do not establish visual acceptance. Record the observed Windows/PyCharm results separately; a live Gemini call also requires its own validation.
+
+Validation status and limitations: [docs/VALIDATION.md](docs/VALIDATION.md). Architecture and rules: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+V1 passed [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38325068591), including the 25-test suite and the ten-scenario deterministic evaluation. These checks do not validate Windows GUI rendering or a live Gemini call.
 
 ## Rule interpretation
 
@@ -106,7 +114,6 @@ The six-hour age policy and priority labels are demonstration choices, not scien
 
 ## References
 
-- Cursor project rules: https://cursor.com/docs/rules
 - Gemini structured output: https://ai.google.dev/gemini-api/docs/generate-content/structured-output
 
 This repository's scenarios contain no real incidents or measured sensor records. Synthetic agreement demonstrates consistency with project rules, not field accuracy.
