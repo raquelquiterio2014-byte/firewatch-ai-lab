@@ -1,0 +1,1405 @@
+{
+  "schema_version": "2.0",
+  "rules_version": "educational-1.0",
+  "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+  "created_at": "2026-10-14T22:31:56.066939Z",
+  "mode": "llm",
+  "incident": {
+    "id": "87080f15-d09e-4a6b-9411-d0cee5526288",
+    "location": "Simulation area — not a real location",
+    "environment": "urban_interface",
+    "smoke": "yes",
+    "flames": "yes",
+    "exposure": "yes",
+    "humidity_pct": null,
+    "wind_kmh": null,
+    "temperature_c": null,
+    "vegetation": "unknown",
+    "description": "Synthetic scenario: 03 — Flames near people. No real incident or measured sensor input.",
+    "evidence": [
+      {
+        "id": "ca2e5650-725b-41f7-963c-37ba6d6470e2",
+        "source": "FireWatch synthetic catalogue",
+        "method": "manual",
+        "provenance": "synthetic",
+        "observed_at": "2026-10-14T22:31:45.895792Z",
+        "content": "Synthetic scenario: 03 — Flames near people. No real incident or measured sensor input.",
+        "reference": null,
+        "conflicts": false
+      }
+    ]
+  },
+  "plan": {
+    "tool": "assess_evidence",
+    "rationale": "Evidence IDs are available for assessment, and no gaps, conflicts, or staleness are indicated that would require further information requests.",
+    "human_review": false
+  },
+  "evidence_result": {
+    "evidence_ids": [
+      "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+    ],
+    "gaps": [],
+    "conflicts": [],
+    "stale_ids": [],
+    "future_ids": []
+  },
+  "assessment": {
+    "status": "STRONG_INDICATION",
+    "rationale": "Flames are present in the supplied observation; this is not independent confirmation.",
+    "evidence_ids": [
+      "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+    ]
+  },
+  "risk": {
+    "level": "HIGH",
+    "rationale": "Fire indicators and reported exposure of people or infrastructure.",
+    "evidence_ids": [
+      "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+    ]
+  },
+  "proposal": {
+    "assessment_status": "STRONG_INDICATION",
+    "risk_level": "HIGH",
+    "human_review": true,
+    "rationale": "The synthetic scenario describes the presence of flames and indicates exposure of people, leading to a strong indication of fire and a high risk level. This assessment is based solely on the provided synthetic evidence.",
+    "questions": [
+      "What specific details are available regarding the 'exposure' of people in this synthetic scenario?",
+      "Are there any simulated environmental factors that could influence the fire's behavior?",
+      "What additional synthetic data points would be beneficial for a more comprehensive educational assessment?"
+    ],
+    "evidence_ids": [
+      "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+    ]
+  },
+  "critic": {
+    "verdict": "APPROVE",
+    "reasons": [
+      "The proposed assessment status and risk level are consistent with the provided incident and evidence data.",
+      "The rationale accurately reflects the basis of the assessment, acknowledging its reliance on synthetic evidence.",
+      "The proposal correctly identifies the relevant evidence IDs.",
+      "The inclusion of questions for further detail is appropriate for an educational prototype.",
+      "The request for human review is explicitly stated in the proposal."
+    ],
+    "human_review": true
+  },
+  "safety": {
+    "human_review_required": true,
+    "reasons": [
+      "Fire indicators require human review.",
+      "Decision LLM requested human review; retained across revisions.",
+      "Critic LLM requested human review; retained across revisions."
+    ]
+  },
+  "revisions": 0,
+  "errors": [],
+  "trace": [
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:56.066939Z",
+      "component": "Coordinator",
+      "action": "run_started",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {
+        "requested_mode": "llm",
+        "orchestrator": "langgraph"
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:56.082454Z",
+      "component": "Evidence",
+      "action": "started",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {}
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:56.082454Z",
+      "component": "Evidence",
+      "action": "completed",
+      "mode": "deterministic",
+      "duration_ms": 0.033,
+      "details": {
+        "output": {
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ],
+          "gaps": [],
+          "conflicts": [],
+          "stale_ids": [],
+          "future_ids": []
+        }
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:56.082454Z",
+      "component": "EvidenceQuality",
+      "action": "started",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {}
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:56.082454Z",
+      "component": "EvidenceQuality",
+      "action": "completed",
+      "mode": "deterministic",
+      "duration_ms": 0.082,
+      "details": {
+        "output": {
+          "completeness": "COMPLETE",
+          "known_indicator_fields": 3,
+          "unknown_fields": [],
+          "stale_ids": [],
+          "future_ids": [],
+          "flagged_conflicts": [],
+          "provenance_counts": {
+            "synthetic": 1
+          },
+          "note": "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+        }
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:56.082454Z",
+      "component": "Coordinator",
+      "action": "node_completed",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {
+        "node": "evidence",
+        "step": 1
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:56.082454Z",
+      "component": "Planner",
+      "action": "llm_started",
+      "mode": "llm",
+      "duration_ms": null,
+      "details": {}
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:58.145845Z",
+      "component": "Planner",
+      "action": "llm_audit",
+      "mode": "llm",
+      "duration_ms": null,
+      "details": {
+        "audit": {
+          "call_id": "78b92a86-4050-45d4-a950-3f8061a9a88e",
+          "component": "Planner",
+          "requested_model": "gemini-2.5-flash",
+          "source": "gemini_api",
+          "started_at": "2026-10-14T22:31:56.082454Z",
+          "succeeded": true,
+          "output_validated": true,
+          "error_code": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "status": "SUCCESS",
+              "duration_ms": 2059.196,
+              "http_status": 200
+            }
+          ],
+          "reported_model_version": "gemini-2.5-flash",
+          "token_usage": {
+            "promptTokenCount": 186,
+            "candidatesTokenCount": 45,
+            "totalTokenCount": 397,
+            "thoughtsTokenCount": 166
+          }
+        }
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:58.145845Z",
+      "component": "Planner",
+      "action": "llm_completed",
+      "mode": "llm",
+      "duration_ms": 2060.8,
+      "details": {
+        "output": {
+          "tool": "assess_evidence",
+          "rationale": "Evidence IDs are available for assessment, and no gaps, conflicts, or staleness are indicated that would require further information requests.",
+          "human_review": false
+        }
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:58.145845Z",
+      "component": "Coordinator",
+      "action": "tool_called",
+      "mode": "llm",
+      "duration_ms": null,
+      "details": {
+        "tool": "assess_evidence",
+        "next_node": "fire_assessment"
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:58.145845Z",
+      "component": "Coordinator",
+      "action": "node_completed",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {
+        "node": "planner",
+        "step": 2
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:58.145845Z",
+      "component": "FireAssessment",
+      "action": "started",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {}
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:58.145845Z",
+      "component": "FireAssessment",
+      "action": "completed",
+      "mode": "deterministic",
+      "duration_ms": 0.036,
+      "details": {
+        "output": {
+          "status": "STRONG_INDICATION",
+          "rationale": "Flames are present in the supplied observation; this is not independent confirmation.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        }
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:58.145845Z",
+      "component": "Coordinator",
+      "action": "node_completed",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {
+        "node": "fire_assessment",
+        "step": 3
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:58.145845Z",
+      "component": "RiskExposure",
+      "action": "started",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {}
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:58.145845Z",
+      "component": "RiskExposure",
+      "action": "completed",
+      "mode": "deterministic",
+      "duration_ms": 0.037,
+      "details": {
+        "output": {
+          "level": "HIGH",
+          "rationale": "Fire indicators and reported exposure of people or infrastructure.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        }
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:58.145845Z",
+      "component": "Coordinator",
+      "action": "node_completed",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {
+        "node": "risk_exposure",
+        "step": 4
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:31:58.145845Z",
+      "component": "Decision",
+      "action": "llm_started",
+      "mode": "llm",
+      "duration_ms": null,
+      "details": {}
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:02.621231Z",
+      "component": "Decision",
+      "action": "llm_audit",
+      "mode": "llm",
+      "duration_ms": null,
+      "details": {
+        "audit": {
+          "call_id": "5863b071-6502-4a32-b868-1ae80a199964",
+          "component": "Decision",
+          "requested_model": "gemini-2.5-flash",
+          "source": "gemini_api",
+          "started_at": "2026-10-14T22:31:58.145845Z",
+          "succeeded": true,
+          "output_validated": true,
+          "error_code": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "status": "SUCCESS",
+              "duration_ms": 4464.328,
+              "http_status": 200
+            }
+          ],
+          "reported_model_version": "gemini-2.5-flash",
+          "token_usage": {
+            "promptTokenCount": 590,
+            "candidatesTokenCount": 164,
+            "totalTokenCount": 1409,
+            "thoughtsTokenCount": 655
+          }
+        }
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:02.621231Z",
+      "component": "Decision",
+      "action": "llm_completed",
+      "mode": "llm",
+      "duration_ms": 4466.981,
+      "details": {
+        "output": {
+          "assessment_status": "STRONG_INDICATION",
+          "risk_level": "HIGH",
+          "human_review": true,
+          "rationale": "The synthetic scenario describes the presence of flames and indicates exposure of people, leading to a strong indication of fire and a high risk level. This assessment is based solely on the provided synthetic evidence.",
+          "questions": [
+            "What specific details are available regarding the 'exposure' of people in this synthetic scenario?",
+            "Are there any simulated environmental factors that could influence the fire's behavior?",
+            "What additional synthetic data points would be beneficial for a more comprehensive educational assessment?"
+          ],
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        }
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:02.624235Z",
+      "component": "Coordinator",
+      "action": "node_completed",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {
+        "node": "decision",
+        "step": 5
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:02.625234Z",
+      "component": "Critic",
+      "action": "llm_started",
+      "mode": "llm",
+      "duration_ms": null,
+      "details": {}
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.536280Z",
+      "component": "Critic",
+      "action": "llm_audit",
+      "mode": "llm",
+      "duration_ms": null,
+      "details": {
+        "audit": {
+          "call_id": "39ebf553-126e-49c9-9b93-20514cdefc4a",
+          "component": "Critic",
+          "requested_model": "gemini-2.5-flash",
+          "source": "gemini_api",
+          "started_at": "2026-10-14T22:32:02.625234Z",
+          "succeeded": true,
+          "output_validated": true,
+          "error_code": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "status": "SUCCESS",
+              "duration_ms": 2918.331,
+              "http_status": 200
+            }
+          ],
+          "reported_model_version": "gemini-2.5-flash",
+          "token_usage": {
+            "promptTokenCount": 757,
+            "candidatesTokenCount": 90,
+            "totalTokenCount": 1262,
+            "thoughtsTokenCount": 415
+          }
+        }
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.536280Z",
+      "component": "Critic",
+      "action": "llm_completed",
+      "mode": "llm",
+      "duration_ms": 2921.582,
+      "details": {
+        "output": {
+          "verdict": "APPROVE",
+          "reasons": [
+            "The proposed assessment status and risk level are consistent with the provided incident and evidence data.",
+            "The rationale accurately reflects the basis of the assessment, acknowledging its reliance on synthetic evidence.",
+            "The proposal correctly identifies the relevant evidence IDs.",
+            "The inclusion of questions for further detail is appropriate for an educational prototype.",
+            "The request for human review is explicitly stated in the proposal."
+          ],
+          "human_review": true
+        }
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.536280Z",
+      "component": "Coordinator",
+      "action": "conditional_edge",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {
+        "verdict": "APPROVE",
+        "revisions": 0,
+        "next_node": "safety_gate"
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.536280Z",
+      "component": "Coordinator",
+      "action": "node_completed",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {
+        "node": "critic",
+        "step": 6
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.536280Z",
+      "component": "SafetyGate",
+      "action": "started",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {}
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.536280Z",
+      "component": "SafetyGate",
+      "action": "completed",
+      "mode": "deterministic",
+      "duration_ms": 0.041,
+      "details": {
+        "output": {
+          "human_review_required": true,
+          "reasons": [
+            "Fire indicators require human review.",
+            "Decision LLM requested human review; retained across revisions.",
+            "Critic LLM requested human review; retained across revisions."
+          ]
+        }
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.551953Z",
+      "component": "Coordinator",
+      "action": "node_completed",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {
+        "node": "safety_gate",
+        "step": 7
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.551953Z",
+      "component": "Reporter",
+      "action": "started",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {}
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.551953Z",
+      "component": "Reporter",
+      "action": "completed",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {}
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.551953Z",
+      "component": "Coordinator",
+      "action": "node_completed",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {
+        "node": "reporter",
+        "step": 8
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.551953Z",
+      "component": "HumanGate",
+      "action": "pending",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {}
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.551953Z",
+      "component": "Coordinator",
+      "action": "node_completed",
+      "mode": "deterministic",
+      "duration_ms": null,
+      "details": {
+        "node": "human_gate",
+        "step": 9
+      }
+    },
+    {
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "at": "2026-10-14T22:32:05.551953Z",
+      "component": "Coordinator",
+      "action": "run_completed",
+      "mode": "llm",
+      "duration_ms": 9486.097,
+      "details": {}
+    }
+  ],
+  "report": "FIREWATCH AI — EDUCATIONAL PROTOTYPE\nRun: 948f6091-9bb4-405f-aec2-e5ecad377fc7\nMode: llm\nLocation: Simulation area — not a real location\n\nASSESSMENT: STRONG_INDICATION\nFlames are present in the supplied observation; this is not independent confirmation.\n\nCONTEXTUAL PRIORITY: HIGH\nFire indicators and reported exposure of people or infrastructure.\n\nHUMAN REVIEW: REQUIRED\n- Fire indicators require human review.\n- Decision LLM requested human review; retained across revisions.\n- Critic LLM requested human review; retained across revisions.\n\nOBSERVATIONS\nSmoke: yes; flames: yes; exposure: yes\nHumidity: None; wind: None; temperature: None\nVegetation: unknown\nDescription: Synthetic scenario: 03 — Flames near people. No real incident or measured sensor input.\n\nEVIDENCE\n- [ca2e5650-725b-41f7-963c-37ba6d6470e2] synthetic/manual; FireWatch synthetic catalogue; 2026-10-14T22:31:45.895792+00:00\n  Synthetic scenario: 03 — Flames near people. No real incident or measured sensor input.\n\nGAPS\n\n\nDECISION PROPOSAL (may be unapproved; reference results above are retained)\nThe synthetic scenario describes the presence of flames and indicates exposure of people, leading to a strong indication of fire and a high risk level. This assessment is based solely on the provided synthetic evidence.\n\nINFORMATION TO VERIFY\n- What specific details are available regarding the 'exposure' of people in this synthetic scenario?\n- Are there any simulated environmental factors that could influence the fire's behavior?\n- What additional synthetic data points would be beneficial for a more comprehensive educational assessment?\n\nLIMITATIONS\nSynthetic/reference rules are not validated fire science. No independent diagnosis, propagation forecast, operational commands or calibrated confidence. Human approval is a record of review, not evidence that an area is safe.\n\nEVIDENCE QUALITY\nIndicator completeness: COMPLETE\nDescriptive checks only; source declarations are not independently verified. No probability or confidence score.\n\nLLM INTEGRATION AUDIT\nPlanner: gemini_api; model=gemini-2.5-flash; attempts=1; validated=True; error=none\nDecision: gemini_api; model=gemini-2.5-flash; attempts=1; validated=True; error=none\nCritic: gemini_api; model=gemini-2.5-flash; attempts=1; validated=True; error=none",
+  "duration_ms": 9486.097,
+  "orchestrator": "langgraph",
+  "evidence_quality": {
+    "completeness": "COMPLETE",
+    "known_indicator_fields": 3,
+    "unknown_fields": [],
+    "stale_ids": [],
+    "future_ids": [],
+    "flagged_conflicts": [],
+    "provenance_counts": {
+      "synthetic": 1
+    },
+    "note": "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+  },
+  "graph_steps": [
+    {
+      "step": 1,
+      "node": "evidence",
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "state": {
+        "observation": {
+          "incident_id": "87080f15-d09e-4a6b-9411-d0cee5526288",
+          "location": "Simulation area — not a real location",
+          "smoke": "yes",
+          "flames": "yes",
+          "exposure": "yes",
+          "humidity_pct": null,
+          "wind_kmh": null,
+          "temperature_c": null,
+          "vegetation": "unknown",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "revision_count": 0,
+        "errors": [],
+        "llm_active": true,
+        "llm_review_requests": [],
+        "evidence": {
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ],
+          "gaps": [],
+          "conflicts": [],
+          "stale_ids": [],
+          "future_ids": []
+        },
+        "quality": {
+          "completeness": "COMPLETE",
+          "known_indicator_fields": 3,
+          "unknown_fields": [],
+          "stale_ids": [],
+          "future_ids": [],
+          "flagged_conflicts": [],
+          "provenance_counts": {
+            "synthetic": 1
+          },
+          "note": "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+        }
+      }
+    },
+    {
+      "step": 2,
+      "node": "planner",
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "state": {
+        "observation": {
+          "incident_id": "87080f15-d09e-4a6b-9411-d0cee5526288",
+          "location": "Simulation area — not a real location",
+          "smoke": "yes",
+          "flames": "yes",
+          "exposure": "yes",
+          "humidity_pct": null,
+          "wind_kmh": null,
+          "temperature_c": null,
+          "vegetation": "unknown",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "revision_count": 0,
+        "errors": [],
+        "llm_active": true,
+        "llm_review_requests": [],
+        "evidence": {
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ],
+          "gaps": [],
+          "conflicts": [],
+          "stale_ids": [],
+          "future_ids": []
+        },
+        "quality": {
+          "completeness": "COMPLETE",
+          "known_indicator_fields": 3,
+          "unknown_fields": [],
+          "stale_ids": [],
+          "future_ids": [],
+          "flagged_conflicts": [],
+          "provenance_counts": {
+            "synthetic": 1
+          },
+          "note": "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+        },
+        "plan": {
+          "tool": "assess_evidence",
+          "rationale": "Evidence IDs are available for assessment, and no gaps, conflicts, or staleness are indicated that would require further information requests.",
+          "human_review": false
+        }
+      }
+    },
+    {
+      "step": 3,
+      "node": "fire_assessment",
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "state": {
+        "observation": {
+          "incident_id": "87080f15-d09e-4a6b-9411-d0cee5526288",
+          "location": "Simulation area — not a real location",
+          "smoke": "yes",
+          "flames": "yes",
+          "exposure": "yes",
+          "humidity_pct": null,
+          "wind_kmh": null,
+          "temperature_c": null,
+          "vegetation": "unknown",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "revision_count": 0,
+        "errors": [],
+        "llm_active": true,
+        "llm_review_requests": [],
+        "evidence": {
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ],
+          "gaps": [],
+          "conflicts": [],
+          "stale_ids": [],
+          "future_ids": []
+        },
+        "quality": {
+          "completeness": "COMPLETE",
+          "known_indicator_fields": 3,
+          "unknown_fields": [],
+          "stale_ids": [],
+          "future_ids": [],
+          "flagged_conflicts": [],
+          "provenance_counts": {
+            "synthetic": 1
+          },
+          "note": "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+        },
+        "plan": {
+          "tool": "assess_evidence",
+          "rationale": "Evidence IDs are available for assessment, and no gaps, conflicts, or staleness are indicated that would require further information requests.",
+          "human_review": false
+        },
+        "assessment": {
+          "status": "STRONG_INDICATION",
+          "rationale": "Flames are present in the supplied observation; this is not independent confirmation.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        }
+      }
+    },
+    {
+      "step": 4,
+      "node": "risk_exposure",
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "state": {
+        "observation": {
+          "incident_id": "87080f15-d09e-4a6b-9411-d0cee5526288",
+          "location": "Simulation area — not a real location",
+          "smoke": "yes",
+          "flames": "yes",
+          "exposure": "yes",
+          "humidity_pct": null,
+          "wind_kmh": null,
+          "temperature_c": null,
+          "vegetation": "unknown",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "revision_count": 0,
+        "errors": [],
+        "llm_active": true,
+        "llm_review_requests": [],
+        "evidence": {
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ],
+          "gaps": [],
+          "conflicts": [],
+          "stale_ids": [],
+          "future_ids": []
+        },
+        "quality": {
+          "completeness": "COMPLETE",
+          "known_indicator_fields": 3,
+          "unknown_fields": [],
+          "stale_ids": [],
+          "future_ids": [],
+          "flagged_conflicts": [],
+          "provenance_counts": {
+            "synthetic": 1
+          },
+          "note": "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+        },
+        "plan": {
+          "tool": "assess_evidence",
+          "rationale": "Evidence IDs are available for assessment, and no gaps, conflicts, or staleness are indicated that would require further information requests.",
+          "human_review": false
+        },
+        "assessment": {
+          "status": "STRONG_INDICATION",
+          "rationale": "Flames are present in the supplied observation; this is not independent confirmation.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "risk": {
+          "level": "HIGH",
+          "rationale": "Fire indicators and reported exposure of people or infrastructure.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        }
+      }
+    },
+    {
+      "step": 5,
+      "node": "decision",
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "state": {
+        "observation": {
+          "incident_id": "87080f15-d09e-4a6b-9411-d0cee5526288",
+          "location": "Simulation area — not a real location",
+          "smoke": "yes",
+          "flames": "yes",
+          "exposure": "yes",
+          "humidity_pct": null,
+          "wind_kmh": null,
+          "temperature_c": null,
+          "vegetation": "unknown",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "revision_count": 0,
+        "errors": [],
+        "llm_active": true,
+        "llm_review_requests": [
+          "Decision LLM requested human review; retained across revisions."
+        ],
+        "evidence": {
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ],
+          "gaps": [],
+          "conflicts": [],
+          "stale_ids": [],
+          "future_ids": []
+        },
+        "quality": {
+          "completeness": "COMPLETE",
+          "known_indicator_fields": 3,
+          "unknown_fields": [],
+          "stale_ids": [],
+          "future_ids": [],
+          "flagged_conflicts": [],
+          "provenance_counts": {
+            "synthetic": 1
+          },
+          "note": "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+        },
+        "plan": {
+          "tool": "assess_evidence",
+          "rationale": "Evidence IDs are available for assessment, and no gaps, conflicts, or staleness are indicated that would require further information requests.",
+          "human_review": false
+        },
+        "assessment": {
+          "status": "STRONG_INDICATION",
+          "rationale": "Flames are present in the supplied observation; this is not independent confirmation.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "risk": {
+          "level": "HIGH",
+          "rationale": "Fire indicators and reported exposure of people or infrastructure.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "proposal": {
+          "assessment_status": "STRONG_INDICATION",
+          "risk_level": "HIGH",
+          "human_review": true,
+          "rationale": "The synthetic scenario describes the presence of flames and indicates exposure of people, leading to a strong indication of fire and a high risk level. This assessment is based solely on the provided synthetic evidence.",
+          "questions": [
+            "What specific details are available regarding the 'exposure' of people in this synthetic scenario?",
+            "Are there any simulated environmental factors that could influence the fire's behavior?",
+            "What additional synthetic data points would be beneficial for a more comprehensive educational assessment?"
+          ],
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        }
+      }
+    },
+    {
+      "step": 6,
+      "node": "critic",
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "state": {
+        "observation": {
+          "incident_id": "87080f15-d09e-4a6b-9411-d0cee5526288",
+          "location": "Simulation area — not a real location",
+          "smoke": "yes",
+          "flames": "yes",
+          "exposure": "yes",
+          "humidity_pct": null,
+          "wind_kmh": null,
+          "temperature_c": null,
+          "vegetation": "unknown",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "revision_count": 0,
+        "errors": [],
+        "llm_active": true,
+        "llm_review_requests": [
+          "Decision LLM requested human review; retained across revisions.",
+          "Critic LLM requested human review; retained across revisions."
+        ],
+        "evidence": {
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ],
+          "gaps": [],
+          "conflicts": [],
+          "stale_ids": [],
+          "future_ids": []
+        },
+        "quality": {
+          "completeness": "COMPLETE",
+          "known_indicator_fields": 3,
+          "unknown_fields": [],
+          "stale_ids": [],
+          "future_ids": [],
+          "flagged_conflicts": [],
+          "provenance_counts": {
+            "synthetic": 1
+          },
+          "note": "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+        },
+        "plan": {
+          "tool": "assess_evidence",
+          "rationale": "Evidence IDs are available for assessment, and no gaps, conflicts, or staleness are indicated that would require further information requests.",
+          "human_review": false
+        },
+        "assessment": {
+          "status": "STRONG_INDICATION",
+          "rationale": "Flames are present in the supplied observation; this is not independent confirmation.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "risk": {
+          "level": "HIGH",
+          "rationale": "Fire indicators and reported exposure of people or infrastructure.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "proposal": {
+          "assessment_status": "STRONG_INDICATION",
+          "risk_level": "HIGH",
+          "human_review": true,
+          "rationale": "The synthetic scenario describes the presence of flames and indicates exposure of people, leading to a strong indication of fire and a high risk level. This assessment is based solely on the provided synthetic evidence.",
+          "questions": [
+            "What specific details are available regarding the 'exposure' of people in this synthetic scenario?",
+            "Are there any simulated environmental factors that could influence the fire's behavior?",
+            "What additional synthetic data points would be beneficial for a more comprehensive educational assessment?"
+          ],
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "critic": {
+          "verdict": "APPROVE",
+          "reasons": [
+            "The proposed assessment status and risk level are consistent with the provided incident and evidence data.",
+            "The rationale accurately reflects the basis of the assessment, acknowledging its reliance on synthetic evidence.",
+            "The proposal correctly identifies the relevant evidence IDs.",
+            "The inclusion of questions for further detail is appropriate for an educational prototype.",
+            "The request for human review is explicitly stated in the proposal."
+          ],
+          "human_review": true
+        }
+      }
+    },
+    {
+      "step": 7,
+      "node": "safety_gate",
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "state": {
+        "observation": {
+          "incident_id": "87080f15-d09e-4a6b-9411-d0cee5526288",
+          "location": "Simulation area — not a real location",
+          "smoke": "yes",
+          "flames": "yes",
+          "exposure": "yes",
+          "humidity_pct": null,
+          "wind_kmh": null,
+          "temperature_c": null,
+          "vegetation": "unknown",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "revision_count": 0,
+        "errors": [],
+        "llm_active": true,
+        "llm_review_requests": [
+          "Decision LLM requested human review; retained across revisions.",
+          "Critic LLM requested human review; retained across revisions."
+        ],
+        "evidence": {
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ],
+          "gaps": [],
+          "conflicts": [],
+          "stale_ids": [],
+          "future_ids": []
+        },
+        "quality": {
+          "completeness": "COMPLETE",
+          "known_indicator_fields": 3,
+          "unknown_fields": [],
+          "stale_ids": [],
+          "future_ids": [],
+          "flagged_conflicts": [],
+          "provenance_counts": {
+            "synthetic": 1
+          },
+          "note": "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+        },
+        "plan": {
+          "tool": "assess_evidence",
+          "rationale": "Evidence IDs are available for assessment, and no gaps, conflicts, or staleness are indicated that would require further information requests.",
+          "human_review": false
+        },
+        "assessment": {
+          "status": "STRONG_INDICATION",
+          "rationale": "Flames are present in the supplied observation; this is not independent confirmation.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "risk": {
+          "level": "HIGH",
+          "rationale": "Fire indicators and reported exposure of people or infrastructure.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "proposal": {
+          "assessment_status": "STRONG_INDICATION",
+          "risk_level": "HIGH",
+          "human_review": true,
+          "rationale": "The synthetic scenario describes the presence of flames and indicates exposure of people, leading to a strong indication of fire and a high risk level. This assessment is based solely on the provided synthetic evidence.",
+          "questions": [
+            "What specific details are available regarding the 'exposure' of people in this synthetic scenario?",
+            "Are there any simulated environmental factors that could influence the fire's behavior?",
+            "What additional synthetic data points would be beneficial for a more comprehensive educational assessment?"
+          ],
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "critic": {
+          "verdict": "APPROVE",
+          "reasons": [
+            "The proposed assessment status and risk level are consistent with the provided incident and evidence data.",
+            "The rationale accurately reflects the basis of the assessment, acknowledging its reliance on synthetic evidence.",
+            "The proposal correctly identifies the relevant evidence IDs.",
+            "The inclusion of questions for further detail is appropriate for an educational prototype.",
+            "The request for human review is explicitly stated in the proposal."
+          ],
+          "human_review": true
+        },
+        "safety": {
+          "human_review_required": true,
+          "reasons": [
+            "Fire indicators require human review.",
+            "Decision LLM requested human review; retained across revisions.",
+            "Critic LLM requested human review; retained across revisions."
+          ]
+        }
+      }
+    },
+    {
+      "step": 8,
+      "node": "reporter",
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "state": {
+        "observation": {
+          "incident_id": "87080f15-d09e-4a6b-9411-d0cee5526288",
+          "location": "Simulation area — not a real location",
+          "smoke": "yes",
+          "flames": "yes",
+          "exposure": "yes",
+          "humidity_pct": null,
+          "wind_kmh": null,
+          "temperature_c": null,
+          "vegetation": "unknown",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "revision_count": 0,
+        "errors": [],
+        "llm_active": true,
+        "llm_review_requests": [
+          "Decision LLM requested human review; retained across revisions.",
+          "Critic LLM requested human review; retained across revisions."
+        ],
+        "evidence": {
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ],
+          "gaps": [],
+          "conflicts": [],
+          "stale_ids": [],
+          "future_ids": []
+        },
+        "quality": {
+          "completeness": "COMPLETE",
+          "known_indicator_fields": 3,
+          "unknown_fields": [],
+          "stale_ids": [],
+          "future_ids": [],
+          "flagged_conflicts": [],
+          "provenance_counts": {
+            "synthetic": 1
+          },
+          "note": "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+        },
+        "plan": {
+          "tool": "assess_evidence",
+          "rationale": "Evidence IDs are available for assessment, and no gaps, conflicts, or staleness are indicated that would require further information requests.",
+          "human_review": false
+        },
+        "assessment": {
+          "status": "STRONG_INDICATION",
+          "rationale": "Flames are present in the supplied observation; this is not independent confirmation.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "risk": {
+          "level": "HIGH",
+          "rationale": "Fire indicators and reported exposure of people or infrastructure.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "proposal": {
+          "assessment_status": "STRONG_INDICATION",
+          "risk_level": "HIGH",
+          "human_review": true,
+          "rationale": "The synthetic scenario describes the presence of flames and indicates exposure of people, leading to a strong indication of fire and a high risk level. This assessment is based solely on the provided synthetic evidence.",
+          "questions": [
+            "What specific details are available regarding the 'exposure' of people in this synthetic scenario?",
+            "Are there any simulated environmental factors that could influence the fire's behavior?",
+            "What additional synthetic data points would be beneficial for a more comprehensive educational assessment?"
+          ],
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "critic": {
+          "verdict": "APPROVE",
+          "reasons": [
+            "The proposed assessment status and risk level are consistent with the provided incident and evidence data.",
+            "The rationale accurately reflects the basis of the assessment, acknowledging its reliance on synthetic evidence.",
+            "The proposal correctly identifies the relevant evidence IDs.",
+            "The inclusion of questions for further detail is appropriate for an educational prototype.",
+            "The request for human review is explicitly stated in the proposal."
+          ],
+          "human_review": true
+        },
+        "safety": {
+          "human_review_required": true,
+          "reasons": [
+            "Fire indicators require human review.",
+            "Decision LLM requested human review; retained across revisions.",
+            "Critic LLM requested human review; retained across revisions."
+          ]
+        }
+      }
+    },
+    {
+      "step": 9,
+      "node": "human_gate",
+      "run_id": "948f6091-9bb4-405f-aec2-e5ecad377fc7",
+      "state": {
+        "observation": {
+          "incident_id": "87080f15-d09e-4a6b-9411-d0cee5526288",
+          "location": "Simulation area — not a real location",
+          "smoke": "yes",
+          "flames": "yes",
+          "exposure": "yes",
+          "humidity_pct": null,
+          "wind_kmh": null,
+          "temperature_c": null,
+          "vegetation": "unknown",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "revision_count": 0,
+        "errors": [],
+        "llm_active": true,
+        "llm_review_requests": [
+          "Decision LLM requested human review; retained across revisions.",
+          "Critic LLM requested human review; retained across revisions."
+        ],
+        "evidence": {
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ],
+          "gaps": [],
+          "conflicts": [],
+          "stale_ids": [],
+          "future_ids": []
+        },
+        "quality": {
+          "completeness": "COMPLETE",
+          "known_indicator_fields": 3,
+          "unknown_fields": [],
+          "stale_ids": [],
+          "future_ids": [],
+          "flagged_conflicts": [],
+          "provenance_counts": {
+            "synthetic": 1
+          },
+          "note": "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+        },
+        "plan": {
+          "tool": "assess_evidence",
+          "rationale": "Evidence IDs are available for assessment, and no gaps, conflicts, or staleness are indicated that would require further information requests.",
+          "human_review": false
+        },
+        "assessment": {
+          "status": "STRONG_INDICATION",
+          "rationale": "Flames are present in the supplied observation; this is not independent confirmation.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "risk": {
+          "level": "HIGH",
+          "rationale": "Fire indicators and reported exposure of people or infrastructure.",
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "proposal": {
+          "assessment_status": "STRONG_INDICATION",
+          "risk_level": "HIGH",
+          "human_review": true,
+          "rationale": "The synthetic scenario describes the presence of flames and indicates exposure of people, leading to a strong indication of fire and a high risk level. This assessment is based solely on the provided synthetic evidence.",
+          "questions": [
+            "What specific details are available regarding the 'exposure' of people in this synthetic scenario?",
+            "Are there any simulated environmental factors that could influence the fire's behavior?",
+            "What additional synthetic data points would be beneficial for a more comprehensive educational assessment?"
+          ],
+          "evidence_ids": [
+            "ca2e5650-725b-41f7-963c-37ba6d6470e2"
+          ]
+        },
+        "critic": {
+          "verdict": "APPROVE",
+          "reasons": [
+            "The proposed assessment status and risk level are consistent with the provided incident and evidence data.",
+            "The rationale accurately reflects the basis of the assessment, acknowledging its reliance on synthetic evidence.",
+            "The proposal correctly identifies the relevant evidence IDs.",
+            "The inclusion of questions for further detail is appropriate for an educational prototype.",
+            "The request for human review is explicitly stated in the proposal."
+          ],
+          "human_review": true
+        },
+        "safety": {
+          "human_review_required": true,
+          "reasons": [
+            "Fire indicators require human review.",
+            "Decision LLM requested human review; retained across revisions.",
+            "Critic LLM requested human review; retained across revisions."
+          ]
+        },
+        "review_pending": true
+      }
+    }
+  ],
+  "llm_calls": [
+    {
+      "call_id": "78b92a86-4050-45d4-a950-3f8061a9a88e",
+      "component": "Planner",
+      "requested_model": "gemini-2.5-flash",
+      "source": "gemini_api",
+      "started_at": "2026-10-14T22:31:56.082454Z",
+      "succeeded": true,
+      "output_validated": true,
+      "error_code": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "SUCCESS",
+          "duration_ms": 2059.196,
+          "http_status": 200
+        }
+      ],
+      "reported_model_version": "gemini-2.5-flash",
+      "token_usage": {
+        "promptTokenCount": 186,
+        "candidatesTokenCount": 45,
+        "totalTokenCount": 397,
+        "thoughtsTokenCount": 166
+      }
+    },
+    {
+      "call_id": "5863b071-6502-4a32-b868-1ae80a199964",
+      "component": "Decision",
+      "requested_model": "gemini-2.5-flash",
+      "source": "gemini_api",
+      "started_at": "2026-10-14T22:31:58.145845Z",
+      "succeeded": true,
+      "output_validated": true,
+      "error_code": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "SUCCESS",
+          "duration_ms": 4464.328,
+          "http_status": 200
+        }
+      ],
+      "reported_model_version": "gemini-2.5-flash",
+      "token_usage": {
+        "promptTokenCount": 590,
+        "candidatesTokenCount": 164,
+        "totalTokenCount": 1409,
+        "thoughtsTokenCount": 655
+      }
+    },
+    {
+      "call_id": "39ebf553-126e-49c9-9b93-20514cdefc4a",
+      "component": "Critic",
+      "requested_model": "gemini-2.5-flash",
+      "source": "gemini_api",
+      "started_at": "2026-10-14T22:32:02.625234Z",
+      "succeeded": true,
+      "output_validated": true,
+      "error_code": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "SUCCESS",
+          "duration_ms": 2918.331,
+          "http_status": 200
+        }
+      ],
+      "reported_model_version": "gemini-2.5-flash",
+      "token_usage": {
+        "promptTokenCount": 757,
+        "candidatesTokenCount": 90,
+        "totalTokenCount": 1262,
+        "thoughtsTokenCount": 415
+      }
+    }
+  ],
+  "llm_review_requests": [
+    "Decision LLM requested human review; retained across revisions.",
+    "Critic LLM requested human review; retained across revisions."
+  ],
+  "human_reviews": []
+}

@@ -1,0 +1,592 @@
+{
+  "evaluation_id": "5b6f220b-f93f-4f55-8006-55cc5d34688f",
+  "evaluated_at": "2026-10-14T21:37:36.078284Z",
+  "version": "3.0.0",
+  "rules_version": "educational-1.0",
+  "mode": "deterministic",
+  "synthetic": true,
+  "repetitions": 2,
+  "baseline_description": "Executable simplified checklist, not a measured human baseline: reported flames -> STRONG_INDICATION/HIGH; smoke -> POSSIBLE_FIRE/MEDIUM; explicitly absent indicators -> NO_INDICATION/LOW; otherwise INSUFFICIENT_EVIDENCE/UNDETERMINED. Review fire indicators or unknown smoke/flames/exposure. It does not adjust priority for exposure or inspect age/conflict flags. Labels favor the project's richer rules; the comparison is illustrative and not evidence of superiority over professional human judgment.",
+  "total": 10,
+  "passed": 10,
+  "metrics": {
+    "cases": 10,
+    "system_case_matches": 10,
+    "baseline_case_matches": 7,
+    "system_field_matches": {
+      "assessment": 10,
+      "risk": 10,
+      "human_review": 10
+    },
+    "baseline_field_matches": {
+      "assessment": 10,
+      "risk": 8,
+      "human_review": 9
+    },
+    "expected_reviews": 8,
+    "system_required_reviews": 8,
+    "system_missed_reviews": 0,
+    "system_extra_reviews": 0,
+    "baseline_missed_reviews": 1,
+    "baseline_extra_reviews": 0,
+    "reproducible_cases": 10,
+    "valid_citation_ids": 30,
+    "citation_ids_checked": 30,
+    "valid_trace_run_ids": 20,
+    "completed_runs": 20,
+    "mean_duration_ms": 13.505
+  },
+  "rows": [
+    {
+      "scenario": "01 \u2014 No reported indicators",
+      "expected": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": false
+      },
+      "actual": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": false
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "20e14108-066c-450e-8817-cef09b8cb713",
+      "duration_ms": 16.906,
+      "baseline": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": false
+      },
+      "baseline_field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "baseline_passed": true,
+      "trials": [
+        {
+          "run_id": "20e14108-066c-450e-8817-cef09b8cb713",
+          "actual": {
+            "assessment": "NO_INDICATION",
+            "risk": "LOW",
+            "human_review": false
+          },
+          "duration_ms": 16.906
+        },
+        {
+          "run_id": "1f34dc67-8739-460a-bc60-9417b6cda45a",
+          "actual": {
+            "assessment": "NO_INDICATION",
+            "risk": "LOW",
+            "human_review": false
+          },
+          "duration_ms": 13.321
+        }
+      ],
+      "reproducible": true,
+      "valid_citation_ids": 3,
+      "citation_ids_checked": 3
+    },
+    {
+      "scenario": "02 \u2014 Smoke, unknown exposure",
+      "expected": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "c24546f1-d213-460b-ac25-8bca45527005",
+      "duration_ms": 18.734,
+      "baseline": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "MEDIUM",
+        "human_review": true
+      },
+      "baseline_field_agreement": {
+        "assessment": true,
+        "risk": false,
+        "human_review": true
+      },
+      "baseline_passed": false,
+      "trials": [
+        {
+          "run_id": "c24546f1-d213-460b-ac25-8bca45527005",
+          "actual": {
+            "assessment": "POSSIBLE_FIRE",
+            "risk": "UNDETERMINED",
+            "human_review": true
+          },
+          "duration_ms": 18.734
+        },
+        {
+          "run_id": "886687bc-32a3-41c0-89f1-85d840c77fab",
+          "actual": {
+            "assessment": "POSSIBLE_FIRE",
+            "risk": "UNDETERMINED",
+            "human_review": true
+          },
+          "duration_ms": 15.834
+        }
+      ],
+      "reproducible": true,
+      "valid_citation_ids": 3,
+      "citation_ids_checked": 3
+    },
+    {
+      "scenario": "03 \u2014 Flames near people",
+      "expected": {
+        "assessment": "STRONG_INDICATION",
+        "risk": "HIGH",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "STRONG_INDICATION",
+        "risk": "HIGH",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "18d07f7e-01ad-4006-8a92-57188ef55fff",
+      "duration_ms": 14.462,
+      "baseline": {
+        "assessment": "STRONG_INDICATION",
+        "risk": "HIGH",
+        "human_review": true
+      },
+      "baseline_field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "baseline_passed": true,
+      "trials": [
+        {
+          "run_id": "18d07f7e-01ad-4006-8a92-57188ef55fff",
+          "actual": {
+            "assessment": "STRONG_INDICATION",
+            "risk": "HIGH",
+            "human_review": true
+          },
+          "duration_ms": 14.462
+        },
+        {
+          "run_id": "742ed672-aaa3-40d7-8440-be47f37e09f5",
+          "actual": {
+            "assessment": "STRONG_INDICATION",
+            "risk": "HIGH",
+            "human_review": true
+          },
+          "duration_ms": 12.159
+        }
+      ],
+      "reproducible": true,
+      "valid_citation_ids": 3,
+      "citation_ids_checked": 3
+    },
+    {
+      "scenario": "04 \u2014 Dry vegetation, unknown indicators",
+      "expected": {
+        "assessment": "INSUFFICIENT_EVIDENCE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "INSUFFICIENT_EVIDENCE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "f974314b-88ec-4305-ae55-1b6357f52da6",
+      "duration_ms": 12.471,
+      "baseline": {
+        "assessment": "INSUFFICIENT_EVIDENCE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "baseline_field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "baseline_passed": true,
+      "trials": [
+        {
+          "run_id": "f974314b-88ec-4305-ae55-1b6357f52da6",
+          "actual": {
+            "assessment": "INSUFFICIENT_EVIDENCE",
+            "risk": "UNDETERMINED",
+            "human_review": true
+          },
+          "duration_ms": 12.471
+        },
+        {
+          "run_id": "40639e29-4cf7-4c1a-9065-d56e6aff704b",
+          "actual": {
+            "assessment": "INSUFFICIENT_EVIDENCE",
+            "risk": "UNDETERMINED",
+            "human_review": true
+          },
+          "duration_ms": 12.77
+        }
+      ],
+      "reproducible": true,
+      "valid_citation_ids": 3,
+      "citation_ids_checked": 3
+    },
+    {
+      "scenario": "05 \u2014 Conflicting reports",
+      "expected": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "MEDIUM",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "MEDIUM",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "7d62b6d3-9bcf-4495-a5d5-99bebafa9398",
+      "duration_ms": 12.736,
+      "baseline": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "MEDIUM",
+        "human_review": true
+      },
+      "baseline_field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "baseline_passed": true,
+      "trials": [
+        {
+          "run_id": "7d62b6d3-9bcf-4495-a5d5-99bebafa9398",
+          "actual": {
+            "assessment": "POSSIBLE_FIRE",
+            "risk": "MEDIUM",
+            "human_review": true
+          },
+          "duration_ms": 12.736
+        },
+        {
+          "run_id": "783de78b-6bdb-4782-9755-1e827fb11479",
+          "actual": {
+            "assessment": "POSSIBLE_FIRE",
+            "risk": "MEDIUM",
+            "human_review": true
+          },
+          "duration_ms": 12.242
+        }
+      ],
+      "reproducible": true,
+      "valid_citation_ids": 3,
+      "citation_ids_checked": 3
+    },
+    {
+      "scenario": "06 \u2014 Old observation",
+      "expected": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "f2e61efb-48ce-47bb-8786-39a55efde965",
+      "duration_ms": 14.39,
+      "baseline": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": false
+      },
+      "baseline_field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": false
+      },
+      "baseline_passed": false,
+      "trials": [
+        {
+          "run_id": "f2e61efb-48ce-47bb-8786-39a55efde965",
+          "actual": {
+            "assessment": "NO_INDICATION",
+            "risk": "LOW",
+            "human_review": true
+          },
+          "duration_ms": 14.39
+        },
+        {
+          "run_id": "e00abaee-477e-4d91-89f5-9521984b7aef",
+          "actual": {
+            "assessment": "NO_INDICATION",
+            "risk": "LOW",
+            "human_review": true
+          },
+          "duration_ms": 11.767
+        }
+      ],
+      "reproducible": true,
+      "valid_citation_ids": 3,
+      "citation_ids_checked": 3
+    },
+    {
+      "scenario": "07 \u2014 Smoke, no reported exposure",
+      "expected": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "MEDIUM",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "MEDIUM",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "641bcdce-a59a-4976-94d0-42fd4356a98a",
+      "duration_ms": 12.56,
+      "baseline": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "MEDIUM",
+        "human_review": true
+      },
+      "baseline_field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "baseline_passed": true,
+      "trials": [
+        {
+          "run_id": "641bcdce-a59a-4976-94d0-42fd4356a98a",
+          "actual": {
+            "assessment": "POSSIBLE_FIRE",
+            "risk": "MEDIUM",
+            "human_review": true
+          },
+          "duration_ms": 12.56
+        },
+        {
+          "run_id": "0009cbf7-4ce8-4625-93e1-3d6fc9e18daa",
+          "actual": {
+            "assessment": "POSSIBLE_FIRE",
+            "risk": "MEDIUM",
+            "human_review": true
+          },
+          "duration_ms": 12.709
+        }
+      ],
+      "reproducible": true,
+      "valid_citation_ids": 3,
+      "citation_ids_checked": 3
+    },
+    {
+      "scenario": "08 \u2014 Flames, unknown exposure",
+      "expected": {
+        "assessment": "STRONG_INDICATION",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "STRONG_INDICATION",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "b86140e4-8979-4520-88b7-373ce5e39484",
+      "duration_ms": 11.682,
+      "baseline": {
+        "assessment": "STRONG_INDICATION",
+        "risk": "HIGH",
+        "human_review": true
+      },
+      "baseline_field_agreement": {
+        "assessment": true,
+        "risk": false,
+        "human_review": true
+      },
+      "baseline_passed": false,
+      "trials": [
+        {
+          "run_id": "b86140e4-8979-4520-88b7-373ce5e39484",
+          "actual": {
+            "assessment": "STRONG_INDICATION",
+            "risk": "UNDETERMINED",
+            "human_review": true
+          },
+          "duration_ms": 11.682
+        },
+        {
+          "run_id": "c9c6fe62-e5e6-4993-b344-771c46cf694a",
+          "actual": {
+            "assessment": "STRONG_INDICATION",
+            "risk": "UNDETERMINED",
+            "human_review": true
+          },
+          "duration_ms": 12.675
+        }
+      ],
+      "reproducible": true,
+      "valid_citation_ids": 3,
+      "citation_ids_checked": 3
+    },
+    {
+      "scenario": "09 \u2014 Dry weather, no indicators",
+      "expected": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": false
+      },
+      "actual": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": false
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "62e668a8-97bb-47a5-80a0-231adc932ccb",
+      "duration_ms": 14.648,
+      "baseline": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": false
+      },
+      "baseline_field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "baseline_passed": true,
+      "trials": [
+        {
+          "run_id": "62e668a8-97bb-47a5-80a0-231adc932ccb",
+          "actual": {
+            "assessment": "NO_INDICATION",
+            "risk": "LOW",
+            "human_review": false
+          },
+          "duration_ms": 14.648
+        },
+        {
+          "run_id": "5c7e418e-ebd5-4514-8547-aacd91d09a40",
+          "actual": {
+            "assessment": "NO_INDICATION",
+            "risk": "LOW",
+            "human_review": false
+          },
+          "duration_ms": 11.841
+        }
+      ],
+      "reproducible": true,
+      "valid_citation_ids": 3,
+      "citation_ids_checked": 3
+    },
+    {
+      "scenario": "10 \u2014 Partial observation",
+      "expected": {
+        "assessment": "INSUFFICIENT_EVIDENCE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "INSUFFICIENT_EVIDENCE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "de1cb0ac-47d8-4fd1-a60d-fd0a5eb96372",
+      "duration_ms": 12.975,
+      "baseline": {
+        "assessment": "INSUFFICIENT_EVIDENCE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "baseline_field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "baseline_passed": true,
+      "trials": [
+        {
+          "run_id": "de1cb0ac-47d8-4fd1-a60d-fd0a5eb96372",
+          "actual": {
+            "assessment": "INSUFFICIENT_EVIDENCE",
+            "risk": "UNDETERMINED",
+            "human_review": true
+          },
+          "duration_ms": 12.975
+        },
+        {
+          "run_id": "634350e8-30a3-4daa-bab1-20bdd2e664c2",
+          "actual": {
+            "assessment": "INSUFFICIENT_EVIDENCE",
+            "risk": "UNDETERMINED",
+            "human_review": true
+          },
+          "duration_ms": 13.214
+        }
+      ],
+      "reproducible": true,
+      "valid_citation_ids": 3,
+      "citation_ids_checked": 3
+    }
+  ],
+  "limitation": "Synthetic, deterministic protocol with authored rule labels. Baseline is an executable simplified checklist, not observed human judgment. Citation-ID validity does not verify evidence truth; repeated-decision agreement does not measure field reliability. Review time, real fires and live LLM evaluation are not measured."
+}

@@ -12,7 +12,7 @@ Package version: **4.0.0**. V4 strengthens the optional Gemini workflow with exp
 
 The **LLM** tab shows model selection, key-configured status, the latest saved probe and the selected run's audit. **Test Gemini JSON** sends no incident observations; success verifies structured JSON access only. Calls record model, attempt outcomes, validation and provider-supplied token counts, without credentials or raw error bodies. The short labels **Review** and **Eval** keep all ten tabs accessible.
 
-The V3 pilot remains deterministic, with ten synthetic cases, two trials per case, an executable checklist and saved comparison metrics. Its rule-based results do not validate live Gemini. No live API invocation has been made during V4 implementation; tests mock provider responses.
+The V3 pilot remains deterministic, with ten synthetic cases, two trials per case, an executable checklist and saved comparison metrics. Its rule-based results do not validate live Gemini. Automated tests mock provider responses. On 14 October 2026, Raquel also completed a Windows acceptance sequence and a live Gemini analysis of synthetic scenario 03; the exported evidence is linked below.
 
 Windows setup, protected key entry and actual live acceptance steps: [docs/V4_WINDOWS.md](docs/V4_WINDOWS.md). Preserve earlier folders/data before replacing your local project. Existing run snapshots remain readable; V4 adds a provider-check table and optional audit fields.
 
@@ -43,10 +43,10 @@ The orchestrator uses **LangGraph 1.2.15**, pinned in requirements.txt. There is
 
 ## Run on Windows with PyCharm
 
-Install Python 3.11 or later with Tkinter support. Download or clone the current repository, extract it if necessary, and open the folder containing `main.py` as a project in PyCharm. Run the following commands in the PyCharm terminal from that project folder:
+Use Python 3.12 with Tkinter support for the documented Windows setup. CI also checks Python 3.11; compatibility with Python 3.13/3.14 has not been verified here. Download or clone the current repository, extract it if necessary, and open the folder containing `main.py` as a project in PyCharm. Run the following commands in the PyCharm terminal from that project folder:
 
 ```powershell
-py -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe main.py
 ```
@@ -66,7 +66,7 @@ $env:GEMINI_MODEL = "gemini-2.5-flash"
 .\.venv\Scripts\python.exe main.py
 ```
 
-First use the **LLM** tab and **Test Gemini JSON** with a configured key, then select **Use Gemini (optional)** in the Incident tab for a synthetic analysis. Model availability and structured-output support depend on the provider/account. Do not put a real key in source files or commits. The default model is configurable; a live provider call has not been validated in the development environment.
+First use the **LLM** tab and **Test Gemini JSON** with a configured key, then select **Use Gemini (optional)** in the Incident tab for a synthetic analysis. Model availability and structured-output support depend on the provider/account. Do not put a real key in source files or commits. The default model is configurable. The recorded Windows scenario-03 run used gemini-2.5-flash; that single run does not validate all scenarios or future provider availability.
 
 ## Interface
 
@@ -99,7 +99,7 @@ The evaluation uses deterministic mode even if a key exists. Use `--scenario 3 -
 
 Tests cover invalid values, unknowns, timestamp validation, stale/conflicting records, fire indications and exposure, bounded revision, invented evidence IDs, removal of required review, fallback, run persistence and worker-thread database access. LLM tests use **offline test doubles**, not a real Gemini invocation.
 
-### Local visual validation in PyCharm
+### Local visual validation on Windows / PyCharm
 
 Start with **Use Gemini (optional)** unchecked. Analyze **03 — Flames near people** and confirm `STRONG_INDICATION`, `HIGH` and mandatory human review. Inspect **Agents**, **State**, **LLM** and **Trace**, then record a human review, export a report and reload the saved run after restarting the app. Check all ten tabs and form scrolling at your actual Windows resolution.
 
@@ -107,7 +107,7 @@ Automated tests do not establish visual acceptance. Record the observed Windows/
 
 Validation status and limitations: [docs/VALIDATION.md](docs/VALIDATION.md). Architecture and rules: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-V3 passed [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38573896721). V4 has **63 passing local tests**, including mocked HTTP flow, retry/fallback, invalid/truncated output, explicit boolean review flags, audit persistence and retained escalation across revisions. Remote CI must be checked for the V4 commit separately. These checks do not validate Windows GUI rendering or a live Gemini call.
+**Recorded Windows validation, 14 October 2026:** V1/V2/V3/V4 suites passed 25/35/43/63 tests respectively. The subsequent V4 request-contract fix passes **64 tests** and [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38647508384). Separately, the exported live Gemini run confirms validated Planner, Decision and Critic calls, STRONG_INDICATION / HIGH / REQUIRED, retained review requests, and reload after restart. See [the acceptance record and JSON/TXT/CSV evidence](docs/evidence/windows-2026-10-14/README.md). This is a limited synthetic acceptance sequence, not full visual acceptance across resolutions or field validation.
 
 Pilot metrics measure agreement with authored synthetic labels and consistency of identifiers/decisions. The baseline is simplified executable code, not measured human judgment. Human review time, field reliability and calibrated confidence are not measured.
 

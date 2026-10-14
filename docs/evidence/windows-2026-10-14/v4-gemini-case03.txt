@@ -1,0 +1,48 @@
+FIREWATCH AI — EDUCATIONAL PROTOTYPE
+Run: 948f6091-9bb4-405f-aec2-e5ecad377fc7
+Mode: llm
+Location: Simulation area — not a real location
+
+ASSESSMENT: STRONG_INDICATION
+Flames are present in the supplied observation; this is not independent confirmation.
+
+CONTEXTUAL PRIORITY: HIGH
+Fire indicators and reported exposure of people or infrastructure.
+
+HUMAN REVIEW: REQUIRED
+- Fire indicators require human review.
+- Decision LLM requested human review; retained across revisions.
+- Critic LLM requested human review; retained across revisions.
+
+OBSERVATIONS
+Smoke: yes; flames: yes; exposure: yes
+Humidity: None; wind: None; temperature: None
+Vegetation: unknown
+Description: Synthetic scenario: 03 — Flames near people. No real incident or measured sensor input.
+
+EVIDENCE
+- [ca2e5650-725b-41f7-963c-37ba6d6470e2] synthetic/manual; FireWatch synthetic catalogue; 2026-10-14T22:31:45.895792+00:00
+  Synthetic scenario: 03 — Flames near people. No real incident or measured sensor input.
+
+GAPS
+
+
+DECISION PROPOSAL (may be unapproved; reference results above are retained)
+The synthetic scenario describes the presence of flames and indicates exposure of people, leading to a strong indication of fire and a high risk level. This assessment is based solely on the provided synthetic evidence.
+
+INFORMATION TO VERIFY
+- What specific details are available regarding the 'exposure' of people in this synthetic scenario?
+- Are there any simulated environmental factors that could influence the fire's behavior?
+- What additional synthetic data points would be beneficial for a more comprehensive educational assessment?
+
+LIMITATIONS
+Synthetic/reference rules are not validated fire science. No independent diagnosis, propagation forecast, operational commands or calibrated confidence. Human approval is a record of review, not evidence that an area is safe.
+
+EVIDENCE QUALITY
+Indicator completeness: COMPLETE
+Descriptive checks only; source declarations are not independently verified. No probability or confidence score.
+
+LLM INTEGRATION AUDIT
+Planner: gemini_api; model=gemini-2.5-flash; attempts=1; validated=True; error=none
+Decision: gemini_api; model=gemini-2.5-flash; attempts=1; validated=True; error=none
+Critic: gemini_api; model=gemini-2.5-flash; attempts=1; validated=True; error=none

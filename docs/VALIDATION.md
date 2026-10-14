@@ -1,53 +1,43 @@
-# Validation record — V4
+# Validation record — FireWatch AI V1–V4
 
-## V4 increment
+Updated 14 October 2026. [Windows acceptance evidence and exports](evidence/windows-2026-10-14/README.md) record the tests performed by Raquel Cruz and the files checked during the session. The GUI was executed on her Windows computer; automated development/CI tests use offline provider doubles.
 
-**63 local tests passed**. New checks exercise missing-key audit, HTTP 429 retry, non-retried HTTP 400, timeout limit, invalid/truncated outputs, explicit boolean review flags, configuration-only probing, sanitized metadata, persistence and retained requests from Planner/Decision/Critic. A complete mocked HTTP workflow verifies provider adapter → Pydantic → graph → Safety Gate → audit. Mocked transport success is not a real Gemini invocation. V4 Windows rendering and provider-backed validation remain pending; follow [V4_WINDOWS.md](V4_WINDOWS.md).
+## Automated suites
 
-## V3 increment
+| Milestone | Windows suite | Observed result |
+|---|---:|---|
+| V1 / 1.1.0 | 25 tests | OK; 10/10 synthetic evaluation |
+| V2 / 2.0.0 | 35 tests | OK; 10/10 synthetic evaluation |
+| V3 / 3.0.0 | 43 tests | OK; 10 cases × 2 deterministic trials |
+| V4 / 4.0.0 initial snapshot | 63 tests | OK; missing-key fallback and live integration checked separately |
 
-Local suite: **43 tests passed** with Python 3.12, LangGraph 1.2.15 and Pydantic 2.14.1. The synthetic pilot reports system 10/10, executable checklist 7/10, system missed/extra reviews 0/0, repeated decisions 10/10, first-trial citation occurrences 30/30 and trace run IDs 20/20. Its sample export is [v3_evaluation_result.json](v3_evaluation_result.json). See [V3_WINDOWS.md](V3_WINDOWS.md) for metric meanings and Windows acceptance checks. No V3 visual or live-provider acceptance is claimed here.
+The subsequent V4 generateContent request-contract adjustment adds a regression test: **64 development tests passed** and [GitHub Actions passed on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38647508384) for commit `328bc4e109332ac6bdf79dda21dfa39d78e63346`. The 64-test suite was not rerun on the user's computer during this record; her local gateway file was updated and used for the successful live checks.
 
-## V2 increment
+Checks include typed-input validation, unknowns, stale/future/conflicting evidence, bounded revisions, actual graph routes, trace IDs, edit invalidation, persistence, provider retry/error handling and review-request retention. Controlled failure/revision fixtures are offline tests, not live model behavior.
 
-Local validation: **35 tests passed** using LangGraph 1.2.15 and Pydantic 2.14.1 on Python 3.12. The ten scenarios matched the V1 reference classifications, risk and Safety Gate decisions. New tests check conditional paths, bounded revision, streamed detached state, descriptive quality, V1 snapshot compatibility and input-edit invalidation. The recorded catalogue result is [v2_evaluation_result.json](v2_evaluation_result.json). V2 GUI rendering and live Gemini remain unverified here; follow [V2_WINDOWS.md](V2_WINDOWS.md).
+## Observed Windows acceptance
 
-## V1 increment
+- V1: initial GUI; scenarios 01 and 03; approval recorded without clearing Safety Gate; approved run reloaded after restart.
+- V2: direct and information-request branches; cards and workflow cleared after input editing; stale evidence requires review; evidence and executed route restored from history.
+- V3: pilot dashboard; selected case 06 opens its saved analysis and shows `old` evidence; JSON/CSV exports; same pilot recovered after restart.
+- V4: LLM tab and configured-key status; missing-key fallback with zero HTTP attempts; successful provider probe; three validated live agent responses for synthetic scenario 03; retained review reasons; same audit and Safety Gate recovered after restart; JSON/TXT exports.
 
-Package 1.1.0 adds a readable Agents view and a typed completed-run State view. The local suite has **25 passing tests**, including three new checks for preservation of unknowns, separation of snapshot copies and retention of Safety Gate reasons after human approval. The original backend passed remote CI on Python 3.11 and 3.12: https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38315261731. V1 GUI rendering still requires Windows inspection.
+## V3 export verification
 
-## Automated checks
+The uploaded Windows JSON and CSV both contain ten cases, matching expected/actual/baseline fields and links to twenty unique trial run IDs. Metrics: system 10/10, simplified checklist 7/10, system missed/extra reviews 0/0, repeated decisions 10/10; recorded citation ID occurrences 30/30 and trace run IDs 20/20. The checklist is executable code, not measured human judgment.
 
-The development environment uses Python 3.12 and Pydantic 2.13.5. Run `python -m unittest discover -s tests -v` and `python main.py --evaluate` to reproduce the checks.
+## V4 live export verification
 
-Initial automated suite: **22 tests passed**. Deterministic synthetic catalogue: **10/10 labelled scenarios matched the reference expectations** for assessment, priority and mandatory human review.
+Run `948f6091-9bb4-405f-aec2-e5ecad377fc7`: synthetic scenario 03, hybrid mode `llm`, STRONG_INDICATION / HIGH / REQUIRED, no recorded errors. Planner, Decision and Critic each have source `gemini_api`, HTTP 200, one attempt and validated output. Decision/Critic review requests reach the deterministic Safety Gate. The Critic approved with zero revisions; no human approval was recorded for this V4 run.
 
-Tests include invalid humidity/negative wind/non-finite values, timezone and duplicate-ID validation, unknown inputs, stale/future/conflicting evidence, unchanged safety requirements, fabricated citations, bounded critic revision, mocked timeout/invalid schema, safe error logging, persistence and worker-thread database operations.
+The exported analysis validates against the Pydantic RunResult model (separate human-review records are removed before model validation). Every trace event and graph snapshot uses the exported run ID. The TXT matches the JSON report exactly after trimming outer whitespace. Evidence IDs refer to the supplied synthetic record.
 
-The recorded CLI catalogue output is in [evaluation_result.json](evaluation_result.json), with expected/actual fields and run IDs.
+An initial HTTP_400 was diagnosed locally as **invalid API key**. The gateway request format was adjusted during investigation, but the status persisted until a valid key was configured. Do not attribute the original failure solely to request format.
 
-Optional Gemini logic and REST parsing are tested using offline doubles. **No live Gemini call has been made.** This does not validate the selected model's current availability or provider compatibility.
+## Remaining scope and limitations
 
-## Visual verification still required
+These checks establish a basic acceptance sequence on one Windows setup and one live Gemini synthetic scenario. They do not establish full layout acceptance across resolutions, execution from PyCharm, live Gemini agreement across all ten cases, adversarial live revision behavior, authenticated source truth, calibrated confidence or real-fire accuracy. The V4 deterministic pilot result was not separately supplied in this acceptance record; earlier V3 exports and automated CI evaluation remain distinct evidence.
 
-Tkinter is importable in the development environment, but a graphical display is unavailable. No screenshot of an executed GUI is supplied and no visual acceptance claim is made.
+The synthetic labels follow educational reference rules. Source/provenance and conflict flags are declarations. No real incidents, measured sensors, propagation forecasts or emergency actions were tested. V5/V6 remain deferred.
 
-On Windows:
-
-1. Launch `run_gui.bat` or `python main.py`.
-2. Inspect at 1366×768 and a larger resolution; resize to the minimum supported window. Confirm form scrolling, readable cards and access to all nine tabs.
-3. Run scenario 03. Expect STRONG_INDICATION, HIGH and REQUIRED human review.
-4. Run scenario 01. Expect NO_INDICATION, LOW and OPTIONAL review; confirm the report does not claim safety.
-5. Enter humidity 101 or negative wind. Confirm input is rejected before analysis.
-6. Run Evaluation and confirm 10/10 labels, then export its JSON.
-7. Record approval/rejection with reviewer and comment. Confirm the record appears and original Safety Gate reasons remain.
-8. Export TXT and JSON, close the app, relaunch and load the same saved run.
-9. Without a key, explicitly enable Gemini: expect FALLBACK and REQUIRED review.
-
-Record actual resolution, command, dependency versions, scenario, observed result and date. Add screenshots only from an actual run and label them with the tested version. Do not use design mockups as execution evidence.
-
-## Evaluation limits
-
-The catalogue and expected labels were authored from educational reference rules. It contains no real sensor input or field validation. The GUI's source/provenance and conflict flags are declared metadata. This version is not an independently validated fire-detection or emergency-response system.
-
-GitHub workflow source is included. Remote CI status must be checked after publication; it has not been assumed from local results.
+For reproduction, follow [V4_WINDOWS.md](V4_WINDOWS.md), [V3_WINDOWS.md](V3_WINDOWS.md) and [V2_WINDOWS.md](V2_WINDOWS.md). Keep provider-backed exports separate from mocked automated test results.

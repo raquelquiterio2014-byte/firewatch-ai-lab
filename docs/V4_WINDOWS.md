@@ -1,6 +1,6 @@
 # FireWatch AI — V4 Audited Gemini Integration
 
-V4 strengthens the optional hybrid mode with a provider JSON probe, per-call audit and persistent human-review requests. The code/tests are ready; **real Gemini access and Windows UI acceptance are still local validation steps**. The automated suite uses mocked transports and injected gateways.
+V4 strengthens the optional hybrid mode with a provider JSON probe, per-call audit and persistent human-review requests. A basic Windows acceptance sequence and live Gemini scenario-03 integration were recorded on 14 October 2026; see [the evidence record](evidence/windows-2026-10-14/README.md). Broader UI and model evaluation remain separate steps. The automated suite uses mocked transports and injected gateways.
 
 ## What changed
 
@@ -64,7 +64,7 @@ The adapter now uses `generationConfig.responseMimeType` and
 of the newer `responseFormat` envelope. This targets the Gemini 2.5 REST contract;
 the HTTP status alone does not establish the original provider error's exact cause.
 The corrected request contract is covered by offline tests (64 tests total).
-Live success remains pending a new local probe. A configured key is not proof of
+The first repeated probe still returned HTTP_400. A local diagnostic identified an invalid API key; after replacing it, the probe and all three scenario-03 agent calls succeeded. The format change alone was not proven to be the cause or solution of the original error. A configured key is not proof of
 valid credentials, available quota or model access.
 
 Existing V4 folders can replace only `firewatch/gateway.py` from the corrected
@@ -92,6 +92,6 @@ Successful API parsing does not establish calibrated reasoning, source truth or 
 
 ## Validation status
 
-63 local automated tests pass, including mocked full HTTP flow, retry limits, invalid/truncated output, explicit review flags, secret-free audit fields, persistence and escalation across rejected/revised proposals. **No live Gemini invocation was made during this implementation.** Windows visual inspection is also pending.
+The original V4 suite passed 63 tests on Raquel's Windows computer. The subsequent request-contract fix passes 64 development/CI tests. A live Gemini probe and Planner/Decision/Critic calls succeeded for synthetic scenario 03, with retained review requests and reloaded audit/Safety Gate. JSON and TXT exports were independently checked for consistency. See [the recorded scope and evidence](evidence/windows-2026-10-14/README.md); all-scenario live evaluation, adversarial live revisions and UI checks at multiple resolutions are not established by this run.
 
 Official API reference consulted: https://ai.google.dev/api/generate-content
