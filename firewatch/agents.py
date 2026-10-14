@@ -75,7 +75,7 @@ def critic_agent(proposal, assessment, risk, evidence):
     return CriticReview(verdict="REVISE" if reasons else "APPROVE", reasons=reasons)
 
 
-def safety_gate(assessment, risk, evidence, proposal, critic, errors):
+def safety_gate(assessment, risk, evidence, proposal, critic, errors, review_requests=()):
     reasons = []
     if assessment.status in ("STRONG_INDICATION", "POSSIBLE_FIRE"):
         reasons.append("Fire indicators require human review.")
@@ -95,6 +95,7 @@ def safety_gate(assessment, risk, evidence, proposal, critic, errors):
         reasons.append("Critic issues remain after the revision limit.")
     if errors:
         reasons.append("LLM fallback or validation failure.")
+    reasons.extend(review_requests)
     if proposal.human_review and not reasons:
         reasons.append("Decision agent requested human review.")
     return SafetyResult(human_review_required=bool(reasons), reasons=reasons)

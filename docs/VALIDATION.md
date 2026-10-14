@@ -1,4 +1,8 @@
-# Validation record — V3
+# Validation record — V4
+
+## V4 increment
+
+**63 local tests passed**. New checks exercise missing-key audit, HTTP 429 retry, non-retried HTTP 400, timeout limit, invalid/truncated outputs, explicit boolean review flags, configuration-only probing, sanitized metadata, persistence and retained requests from Planner/Decision/Critic. A complete mocked HTTP workflow verifies provider adapter → Pydantic → graph → Safety Gate → audit. Mocked transport success is not a real Gemini invocation. V4 Windows rendering and provider-backed validation remain pending; follow [V4_WINDOWS.md](V4_WINDOWS.md).
 
 ## V3 increment
 

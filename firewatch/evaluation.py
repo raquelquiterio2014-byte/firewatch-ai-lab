@@ -5,6 +5,7 @@ from statistics import mean
 from uuid import uuid4
 
 from .baseline import DESCRIPTION, checklist_baseline
+from . import __version__
 from .models import (EvaluationCase, EvaluationDecision, EvaluationMetrics, EvaluationTrial,
                      PilotEvaluation, now)
 from .pipeline import Pipeline
@@ -89,6 +90,7 @@ def evaluate(store=None, repetitions=2, pipeline_factory=Pipeline):
         ))
     metrics = aggregate_metrics(rows, len(durations), valid_trace_runs, durations)
     evaluation = PilotEvaluation(
+        version=__version__,
         evaluation_id=str(uuid4()), evaluated_at=now(), repetitions=repetitions,
         baseline_description=DESCRIPTION, total=len(rows), passed=metrics.system_case_matches,
         metrics=metrics, rows=rows,

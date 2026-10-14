@@ -2,7 +2,7 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-from .models import HumanReview, PilotEvaluation, RunResult
+from .models import HumanReview, LLMCallRecord, PilotEvaluation, RunResult
 
 
 class Store:
@@ -22,6 +22,8 @@ class Store:
                 CREATE TABLE IF NOT EXISTS human_reviews(id INTEGER PRIMARY KEY AUTOINCREMENT,
                     run_id TEXT NOT NULL REFERENCES runs(id), snapshot TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS pilot_evaluations(id TEXT PRIMARY KEY,
+                    created_at TEXT NOT NULL, snapshot TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS provider_checks(id TEXT PRIMARY KEY,
                     created_at TEXT NOT NULL, snapshot TEXT NOT NULL);
             """)
 
@@ -87,3 +89,14 @@ class Store:
     def evaluations(self, limit=10):
         with self.connect() as db:
             return db.execute("SELECT id, created_at FROM pilot_evaluations ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+
+    def save_provider_check(self, record):
+        record = LLMCallRecord.model_validate(record.model_dump())
+        with self.connect() as db:
+            db.execute("INSERT INTO provider_checks VALUES (?, ?, ?)",
+                       (record.call_id, record.started_at.isoformat(), record.model_dump_json()))
+
+    def latest_provider_check(self):
+        with self.connect() as db:
+            row = db.execute("SELECT snapshot FROM provider_checks ORDER BY created_at DESC LIMIT 1").fetchone()
+        return LLMCallRecord.model_validate_json(row[0]) if row else None

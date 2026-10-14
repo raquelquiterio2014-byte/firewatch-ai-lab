@@ -8,6 +8,8 @@ from tkinter import filedialog, messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 
 from .evaluation import evaluate, evaluation_csv
+from .gateway import configured_model, configuration_status
+from .integration import check_gemini
 from .models import Evidence, HumanReview, Incident, SharedState
 from .pipeline import Pipeline
 from .presentation import agent_summary
@@ -27,7 +29,8 @@ class FireWatchApp:
         self.live_steps = []
         self.messages = queue.Queue()
         self.fields = {}
-        root.title("FireWatch AI — V3 | Supervised Pilot Evaluation")
+        self.gemini_model = tk.StringVar(value=configured_model())
+        root.title("FireWatch AI — V4 | Audited Gemini Integration")
         root.geometry("1120x760")
         root.minsize(760, 560)
         root.configure(bg="#101d30")
@@ -43,7 +46,7 @@ class FireWatchApp:
         header = tk.Frame(root, bg="#101d30", padx=20, pady=14)
         header.pack(fill="x")
         ttk.Label(header, text="FIREWATCH AI", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(header, text="V3 • Pilot evaluation • Baseline comparison • Evidence traceability", style="Hero.TLabel").pack(anchor="w")
+        ttk.Label(header, text="V4 • Audited Gemini • Persistent review requests • Deterministic fallback", style="Hero.TLabel").pack(anchor="w")
         tk.Label(header, text="EDUCATIONAL PROTOTYPE  |  Synthetic examples  |  No independent fire diagnosis",
                  bg="#101d30", fg="#ffcb77", font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 0))
         cards = tk.Frame(root, bg="#edf1f5", padx=15, pady=10)
@@ -62,10 +65,11 @@ class FireWatchApp:
         self.tabs.add(self.incident_tab, text="Incident")
         self.build_form()
         self.outputs = {}
-        for name in ("Multi-Agent Analysis", "Workflow", "Evidence", "Safety & Human Gate", "Explainable Report", "Agent Trace", "Shared State", "Evaluation"):
+        for name in ("Multi-Agent Analysis", "Workflow", "Evidence", "Safety & Human Gate", "Explainable Report", "Agent Trace", "Shared State", "Evaluation", "LLM"):
             tab = ttk.Frame(self.tabs)
-            short_labels = {"Multi-Agent Analysis": "Agents", "Safety & Human Gate": "Safety / Review",
-                            "Explainable Report": "Report", "Agent Trace": "Trace", "Shared State": "State"}
+            short_labels = {"Multi-Agent Analysis": "Agents",
+                            "Explainable Report": "Report", "Agent Trace": "Trace", "Shared State": "State",
+                            "Evaluation": "Eval", "Safety & Human Gate": "Review"}
             self.tabs.add(tab, text=short_labels.get(name, name))
             if name == "Workflow":
                 self.build_workflow_canvas(tab)
@@ -80,6 +84,8 @@ class FireWatchApp:
                 ttk.Button(bar, text="Export run JSON", command=self.export_run).pack(side="left", padx=8)
             if name == "Evaluation":
                 self.build_evaluation_panel(tab)
+            if name == "LLM":
+                self.build_llm_panel(tab)
             output = ScrolledText(tab, wrap="word", bg="#ffffff", fg="#182c43",
                                   font=("Consolas", 10), padx=12, pady=10, relief="flat")
             output.pack(fill="both", expand=True, padx=10, pady=8)
@@ -91,12 +97,47 @@ class FireWatchApp:
         ttk.Label(footer, textvariable=self.status, wraplength=1050).pack(anchor="w")
         self.load_scenario()
         self.refresh_history()
+        self.show_llm_status()
         for var in self.fields.values():
             var.trace_add("write", lambda *_: self.input_changed())
         self.conflict.trace_add("write", lambda *_: self.input_changed())
+        self.llm.trace_add("write", lambda *_: self.input_changed())
+        self.gemini_model.trace_add("write", lambda *_: self.input_changed())
         self.description.bind("<<Modified>>", self.description_changed)
         self.description.edit_modified(False)
         root.after(100, self.poll)
+
+    def build_llm_panel(self, tab):
+        bar = ttk.Frame(tab)
+        bar.pack(fill="x", padx=12, pady=8)
+        ttk.Label(bar, text="Requested model").pack(side="left")
+        ttk.Entry(bar, textvariable=self.gemini_model, width=30).pack(side="left", padx=8)
+        self.provider_button = ttk.Button(bar, text="Test Gemini JSON", command=self.test_provider)
+        self.provider_button.pack(side="left")
+        ttk.Button(bar, text="Refresh status", command=self.show_llm_status).pack(side="left", padx=8)
+        self.llm_status = tk.StringVar()
+        ttk.Label(tab, textvariable=self.llm_status, wraplength=950).pack(anchor="w", padx=12, pady=4)
+        ttk.Label(tab, text="Test Gemini JSON sends a configuration probe only. Enabling Gemini for Analyze Incident sends the supplied observations to the provider. The synthetic pilot remains deterministic.",
+                  wraplength=950).pack(anchor="w", padx=12, pady=4)
+
+    def show_llm_status(self):
+        status = configuration_status()
+        self.llm_status.set(f"Key configured in this process: {'YES' if status['key_configured'] else 'NO'}. "
+                            "Keys are never displayed or exported. A successful probe verifies JSON access only.")
+        data = {"configuration": status, "selected_model": self.gemini_model.get(),
+                "latest_saved_probe": None, "current_run_calls": []}
+        probe = self.store.latest_provider_check()
+        if probe:
+            data["latest_saved_probe"] = probe.model_dump(mode="json")
+        if self.current:
+            data["run_id"] = self.current.run_id
+            data["current_run_calls"] = [call.model_dump(mode="json") for call in self.current.llm_calls]
+            data["retained_review_requests"] = self.current.llm_review_requests
+        self.set_output("LLM", json.dumps(data, indent=2, ensure_ascii=False))
+
+    def test_provider(self):
+        model = self.gemini_model.get().strip()
+        self.start_job("provider_check", lambda: check_gemini(model=model, store=self.store))
 
     def build_evidence_panel(self, tab):
         self.evidence_note = tk.StringVar(value="No analysis selected. Completeness is not confidence or source verification.")
@@ -277,7 +318,8 @@ class FireWatchApp:
 
     def form_fingerprint(self):
         return (tuple((key, var.get()) for key, var in self.fields.items()),
-                self.conflict.get(), self.description.get("1.0", "end").strip())
+                self.conflict.get(), self.description.get("1.0", "end").strip(),
+                self.llm.get(), self.gemini_model.get())
 
     def description_changed(self, _):
         if self.description.edit_modified():
@@ -295,7 +337,7 @@ class FireWatchApp:
         if not self.busy:
             self.status.set("Input changed — analyze again. Previous results remain saved in history.")
             for name in self.outputs:
-                if name != "Evaluation":
+                if name not in ("Evaluation", "LLM"):
                     self.set_output(name, "Input changed. Run Analyze Incident or load a saved run.")
             for box in self.flow_boxes.values():
                 self.flow_canvas.itemconfigure(box, fill="white")
@@ -420,6 +462,7 @@ class FireWatchApp:
         self.busy = True
         self.run_button.configure(state="disabled")
         self.eval_button.configure(state="disabled")
+        self.provider_button.configure(state="disabled")
         self.status.set("Running synthetic pilot — 10 cases, two deterministic trials each."
                         if kind == "evaluation" else "Analyzing incident — interface remains available.")
         def work():
@@ -438,11 +481,12 @@ class FireWatchApp:
             messagebox.showerror("Invalid observation", str(exc))
             return
         use_llm = self.llm.get()
+        model = self.gemini_model.get().strip()
         self.running_fingerprint = self.form_fingerprint()
         self.live_steps = []
         self.refresh_flow([])
         def job():
-            result = Pipeline().run(incident, use_llm=use_llm,
+            result = Pipeline(model=model).run(incident, use_llm=use_llm,
                                     on_step=lambda step: self.messages.put(("progress", step, None)))
             self.store.save(result)
             return result
@@ -465,6 +509,7 @@ class FireWatchApp:
                 self.busy = False
                 self.run_button.configure(state="normal")
                 self.eval_button.configure(state="normal")
+                self.provider_button.configure(state="normal")
                 if error:
                     self.status.set(error)
                     messagebox.showerror("Operation failed", error)
@@ -475,6 +520,10 @@ class FireWatchApp:
                     if self.form_fingerprint() != self.running_fingerprint:
                         self.input_changed()
                         self.status.set("Result saved for the earlier input. Current form changed; analyze again or load the saved run.")
+                elif kind == "provider_check":
+                    self.show_llm_status()
+                    self.status.set("Gemini JSON probe succeeded; fire-analysis validation is separate."
+                                    if value.succeeded else f"Gemini JSON probe failed: {value.error_code}.")
                 else:
                     self.show_evaluation(value)
                     self.status.set("Pilot complete: 10 synthetic cases, 20 saved runs and persisted comparison metrics.")
@@ -506,6 +555,7 @@ class FireWatchApp:
         self.set_output("Agent Trace", "\n".join(e.model_dump_json() for e in result.trace))
         self.refresh_flow(result.graph_steps)
         self.update_review_output()
+        self.show_llm_status()
 
     def update_review_output(self):
         if not self.current:

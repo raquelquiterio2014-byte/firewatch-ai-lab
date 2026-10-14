@@ -5,6 +5,7 @@ from pathlib import Path
 
 from firewatch.evaluation import evaluate, evaluation_csv
 from firewatch.pipeline import Pipeline
+from firewatch.integration import check_gemini
 from firewatch.scenarios import SCENARIOS, get_scenario
 from firewatch.storage import Store
 
@@ -18,9 +19,21 @@ def main():
     parser.add_argument("--data-dir", default="data", help="SQLite and trace destination")
     parser.add_argument("--repetitions", type=int, choices=range(2, 6), default=2, help="Decision-stability trials per evaluation case")
     parser.add_argument("--csv", type=Path, help="Write per-scenario CSV for --evaluate")
+    parser.add_argument("--check-gemini", action="store_true", help="Explicit provider JSON probe, without incident observations")
+    parser.add_argument("--model", help="Gemini model override for --llm or --check-gemini")
     args = parser.parse_args()
     if args.csv and not args.evaluate:
         parser.error("--csv requires --evaluate")
+    if args.check_gemini:
+        if args.evaluate or args.scenario or args.csv or args.llm:
+            parser.error("--check-gemini is separate from scenario analysis and evaluation")
+        record = check_gemini(model=args.model, store=Store(args.data_dir))
+        content = record.model_dump_json(indent=2)
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(content + "\n", encoding="utf-8")
+        print(content)
+        return 0 if record.succeeded and record.output_validated else 2
     if args.evaluate or args.scenario:
         store = Store(args.data_dir)
         if args.evaluate:
@@ -33,7 +46,7 @@ def main():
             code = 0 if data["passed"] == data["total"] else 1
         else:
             name = list(SCENARIOS)[args.scenario - 1]
-            result = Pipeline().run(get_scenario(name), use_llm=args.llm)
+            result = Pipeline(model=args.model).run(get_scenario(name), use_llm=args.llm)
             store.save(result)
             data, code = result.model_dump(mode="json"), 0
         content = json.dumps(data, indent=2, ensure_ascii=False)

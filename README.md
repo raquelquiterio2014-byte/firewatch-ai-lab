@@ -1,4 +1,4 @@
-# FireWatch AI — V3
+# FireWatch AI — V4
 
 **Educational multi-agent prototype for fire-indicator analysis, evidence traceability and human review.**
 
@@ -6,17 +6,15 @@ Developed by **Raquel Cruz** as an educational project inspired by the evidence,
 
 FireWatch evaluates **supplied observations** about vegetation and the urban–vegetation interface. It distinguishes fire indications, contextual priority and evidence gaps. It does not independently diagnose a fire, forecast propagation, issue operational commands or establish that an area is safe.
 
-## V3 — Supervised Pilot Evaluation
+## V4 — Audited Gemini Integration
 
-Package version: **3.0.0**. V3 keeps the LangGraph conditional workflow and adds a persisted evaluation dashboard: ten synthetic cases, two trials per case, an executable simplified checklist baseline, field agreement, missed/extra review counts, citation-ID validity and repeated-decision stability.
+Package version: **4.0.0**. V4 strengthens the optional Gemini workflow with explicit review booleans, retained escalation requests, a provider-only JSON probe and per-call audit records. Planner, Decision and Critic requests for human review survive revisions/rejected proposals and reach the deterministic Safety Gate.
 
-**Evaluation** presents summary cards, a per-case table, expected/actual fields, saved pilot history and links to each completed analysis. Export the comparison as JSON or CSV. **Evidence** now has a table showing source, method, declared provenance, timestamps and flags; completeness remains descriptive, not confidence.
+The **LLM** tab shows model selection, key-configured status, the latest saved probe and the selected run's audit. **Test Gemini JSON** sends no incident observations; success verifies structured JSON access only. Calls record model, attempt outcomes, validation and provider-supplied token counts, without credentials or raw error bodies. The short labels **Review** and **Eval** keep all ten tabs accessible.
 
-The sample catalogue yields system agreement **10/10**, simplified checklist agreement **7/10**, system missed/extra reviews **0/0**, and repeated decisions **10/10**. The authored labels follow the richer system's rules; this is not an independent field-accuracy study or a comparison against observed professional human decisions.
+The V3 pilot remains deterministic, with ten synthetic cases, two trials per case, an executable checklist and saved comparison metrics. Its rule-based results do not validate live Gemini. No live API invocation has been made during V4 implementation; tests mock provider responses.
 
-Windows and PyCharm remain the local validation environment. Start without a key. Download the current version into a separate folder and preserve earlier folders/data. Existing run snapshots remain readable; the database adds a table for V3 pilot records.
-
-V3 installation, protocol and metric definitions: [docs/V3_WINDOWS.md](docs/V3_WINDOWS.md).
+Windows setup, protected key entry and actual live acceptance steps: [docs/V4_WINDOWS.md](docs/V4_WINDOWS.md). Preserve earlier folders/data before replacing your local project. Existing run snapshots remain readable; V4 adds a provider-check table and optional audit fields.
 
 ## What is implemented
 
@@ -29,14 +27,15 @@ V3 installation, protocol and metric definitions: [docs/V3_WINDOWS.md](docs/V3_W
 - SQLite run snapshots, evidence records, saved-run history and real JSONL trace events.
 - TXT reports, JSON run/evaluation export and CSV evaluation tables.
 - Executable checklist comparison, per-field agreement, missed/extra review counts and trial-linked history.
-- Optional Gemini adapter with structured outputs, bounded retries and explicit fallback.
+- Optional Gemini adapter with explicit review flags, audited structured outputs, bounded retries and explicit fallback.
+- A configuration-only JSON probe, persisted separately from fire analysis.
 - Windows launcher and a GitHub Actions workflow.
 
 ## Two execution modes
 
 **Deterministic:** works without an API key. LangGraph runs rule-based specialist nodes; graph orchestration itself does not create autonomous LLM reasoning. Rules remain educational project hypotheses.
 
-**Gemini hybrid:** Planner chooses one authorized analysis route, Decision drafts a structured review proposal, and Critic approves or requests revision. The selected route is executed and logged. Fire assessment, contextual priority, evidence checks and Safety Gate remain deterministic. At most one revision is allowed; each API call has at most two attempts with a 20-second request timeout. Missing credentials, provider/network failures or invalid output cause fallback and mandatory review.
+**Gemini hybrid:** Planner chooses one authorized analysis route, Decision drafts a structured review proposal, and Critic approves or requests revision. The selected route is executed and logged. Fire assessment, contextual priority, evidence checks and Safety Gate remain deterministic. At most one revision is allowed; each API call has at most two attempts with a 20-second request timeout. Missing credentials, provider/network failures or invalid output cause fallback and mandatory review. Requests for review are accumulated across calls and revisions; a later response cannot clear them.
 
 `request_information_then_assess` records pending human information; it does not contact an external source and does not invent missing data. The application still analyzes the available observation with explicit unknowns.
 
@@ -60,15 +59,14 @@ No activation or PowerShell execution-policy change is required. On Linux, insta
 
 ### Optional Gemini
 
-Set the key in the same terminal before launching. The app reads environment variables; it **does not automatically load `.env`**.
+Set the key in the same terminal before launching. The app reads environment variables; it **does not automatically load `.env`**. Use the masked PowerShell entry in [V4_WINDOWS.md](docs/V4_WINDOWS.md), so the credential is not entered as literal command history.
 
 ```powershell
-$env:GEMINI_API_KEY = "YOUR_KEY"
 $env:GEMINI_MODEL = "gemini-2.5-flash"
 .\.venv\Scripts\python.exe main.py
 ```
 
-Select **Use Gemini (optional)** in the GUI. Model availability and structured-output support depend on the provider/account. Do not put a real key in source files or commits. The default model is configurable; a live provider call has not been validated in the development environment.
+First use the **LLM** tab and **Test Gemini JSON** with a configured key, then select **Use Gemini (optional)** in the Incident tab for a synthetic analysis. Model availability and structured-output support depend on the provider/account. Do not put a real key in source files or commits. The default model is configurable; a live provider call has not been validated in the development environment.
 
 ## Interface
 
@@ -78,11 +76,12 @@ Select **Use Gemini (optional)** in the GUI. Model availability and structured-o
 | Agents | Actual component results, selected plan, critic verdict and revision count |
 | Workflow | Compiled node topology, visited route and live completion updates |
 | Evidence | Source/provenance inspector plus descriptive completeness, timestamps and flagged conflicts |
-| Safety / Review | Mandatory review reasons and reviewer/comment records |
+| Review | Mandatory reasons, retained LLM review requests and reviewer/comment records |
 | Report | Explainable TXT report and JSON export |
 | Trace | Actual events linked to the current run ID |
 | State | Intermediate graph snapshots during execution; validated final outputs and human reviews afterward |
-| Evaluation | Saved pilot dashboard, baseline comparison, repeated trials, per-case inspection and JSON/CSV export |
+| Eval | Saved pilot dashboard, baseline comparison, repeated trials, per-case inspection and JSON/CSV export |
+| LLM | Requested model, key-configured status, provider JSON probe and per-call audit |
 
 The GUI accepts one evidence record per new manual analysis. The backend supports multiple evidence records. Normalized form fields drive the reference rules: free text is **not automatically extracted**. Conflict flags and provenance are entered declarations, not independent verification.
 
@@ -102,13 +101,13 @@ Tests cover invalid values, unknowns, timestamp validation, stale/conflicting re
 
 ### Local visual validation in PyCharm
 
-Start with **Use Gemini (optional)** unchecked. Analyze **03 — Flames near people** and confirm `STRONG_INDICATION`, `HIGH` and mandatory human review. Inspect **Agents**, **State** and **Trace**, then record a human review, export a report and reload the saved run after restarting the app. Check all nine tabs and form scrolling at your actual Windows resolution.
+Start with **Use Gemini (optional)** unchecked. Analyze **03 — Flames near people** and confirm `STRONG_INDICATION`, `HIGH` and mandatory human review. Inspect **Agents**, **State**, **LLM** and **Trace**, then record a human review, export a report and reload the saved run after restarting the app. Check all ten tabs and form scrolling at your actual Windows resolution.
 
 Automated tests do not establish visual acceptance. Record the observed Windows/PyCharm results separately; a live Gemini call also requires its own validation.
 
 Validation status and limitations: [docs/VALIDATION.md](docs/VALIDATION.md). Architecture and rules: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-V2 passed [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38488970214). V3 has **43 passing local tests**, including detection of changing repeated decisions, invalid citation/trace IDs, missed/extra review accounting, persistent trial links and CSV/JSON export. Remote CI must be checked for the V3 commit separately. These checks do not validate Windows GUI rendering or a live Gemini call.
+V3 passed [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38573896721). V4 has **63 passing local tests**, including mocked HTTP flow, retry/fallback, invalid/truncated output, explicit boolean review flags, audit persistence and retained escalation across revisions. Remote CI must be checked for the V4 commit separately. These checks do not validate Windows GUI rendering or a live Gemini call.
 
 Pilot metrics measure agreement with authored synthetic labels and consistency of identifiers/decisions. The baseline is simplified executable code, not measured human judgment. Human review time, field reliability and calibrated confidence are not measured.
 
@@ -130,6 +129,7 @@ The six-hour age policy and priority labels are demonstration choices, not scien
 - LangGraph Graph API: https://docs.langchain.com/oss/python/langgraph/graph-api
 - LangGraph streaming: https://docs.langchain.com/oss/python/langgraph/streaming
 
+- Gemini GenerateContent API: https://ai.google.dev/api/generate-content
 - Gemini structured output: https://ai.google.dev/gemini-api/docs/generate-content/structured-output
 
 This repository's scenarios contain no real incidents or measured sensor records. Synthetic agreement demonstrates consistency with project rules, not field accuracy.

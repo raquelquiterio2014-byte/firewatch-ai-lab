@@ -87,6 +87,7 @@ class Risk(Model):
 class Plan(Model):
     tool: Literal["assess_evidence", "request_information_then_assess"]
     rationale: str = Field(min_length=1, max_length=2000)
+    human_review: bool = False
 
 
 class Proposal(Model):
@@ -101,6 +102,7 @@ class Proposal(Model):
 class CriticReview(Model):
     verdict: Literal["APPROVE", "REVISE"]
     reasons: list[str] = Field(max_length=12)
+    human_review: bool = False
 
 
 class SafetyResult(Model):
@@ -136,6 +138,31 @@ class GraphStep(Model):
     state: dict
 
 
+class LLMAttempt(Model):
+    attempt: int = Field(ge=1, le=2)
+    status: Literal["SUCCESS", "HTTP_ERROR", "NETWORK_ERROR", "INVALID_OUTPUT", "BLOCKED"]
+    duration_ms: float = Field(ge=0)
+    http_status: int | None = None
+
+
+class LLMCallRecord(Model):
+    call_id: str = Field(default_factory=lambda: str(uuid4()))
+    component: str
+    requested_model: str
+    source: Literal["gemini_api", "injected_gateway", "configuration"]
+    started_at: datetime = Field(default_factory=now)
+    succeeded: bool = False
+    output_validated: bool = False
+    error_code: str | None = None
+    attempts: list[LLMAttempt] = Field(default_factory=list, max_length=2)
+    reported_model_version: str | None = None
+    token_usage: dict[str, int] = Field(default_factory=dict)
+
+
+class ConnectionProbe(Model):
+    status: Literal["ok"]
+
+
 class RunResult(Model):
     schema_version: str = "1.0"
     rules_version: str = "educational-1.0"
@@ -158,6 +185,8 @@ class RunResult(Model):
     orchestrator: str = "python-v1"
     evidence_quality: EvidenceQuality | None = None
     graph_steps: list[GraphStep] = Field(default_factory=list)
+    llm_calls: list[LLMCallRecord] = Field(default_factory=list)
+    llm_review_requests: list[str] = Field(default_factory=list)
 
 
 class HumanReview(Model):
@@ -192,6 +221,8 @@ class SharedState(Model):
     human_reviews: list[HumanReview] = Field(default_factory=list)
     orchestrator: str = "python-v1"
     evidence_quality: EvidenceQuality | None = None
+    llm_calls: list[LLMCallRecord] = Field(default_factory=list)
+    llm_review_requests: list[str] = Field(default_factory=list)
 
     @classmethod
     def from_run(cls, result, reviews=()):
@@ -210,6 +241,8 @@ class SharedState(Model):
             "human_reviews": [review.model_dump(mode="json") for review in reviews],
             "orchestrator": result.orchestrator,
             "evidence_quality": result.evidence_quality.model_dump(mode="json") if result.evidence_quality else None,
+            "llm_calls": [call.model_dump(mode="json") for call in result.llm_calls],
+            "llm_review_requests": list(result.llm_review_requests),
         })
 
 

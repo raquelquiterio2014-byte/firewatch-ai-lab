@@ -7,9 +7,9 @@ from uuid import uuid4
 from langgraph.graph import END, START, StateGraph
 
 from . import agents
-from .gateway import GeminiGateway
+from .gateway import GeminiGateway, GatewayError
 from .models import (Assessment, CriticReview, Event, EvidenceQuality, EvidenceResult,
-                     GraphStep, Incident, Plan, Proposal, Risk, RunResult, SafetyResult, now)
+                     GraphStep, Incident, LLMCallRecord, Plan, Proposal, Risk, RunResult, SafetyResult, now)
 from .quality import evidence_quality
 
 
@@ -29,6 +29,7 @@ class WorkflowState(TypedDict, total=False):
     questions: list[str]
     report: str
     review_pending: bool
+    review_requests: list[str]
 
 
 NODE_NAMES = ("evidence", "planner", "information_request", "fire_assessment", "risk_exposure",
@@ -71,6 +72,7 @@ def state_snapshot(state):
                                "evidence_ids": [e.id for e in incident.evidence]},
                 "revision_count": state["revisions"], "errors": list(state["errors"]),
                 "llm_active": state["llm_active"]}
+    snapshot["llm_review_requests"] = list(state.get("review_requests", []))
     for key in ("evidence", "quality", "plan", "assessment", "risk", "proposal", "critic", "safety"):
         if key in state:
             snapshot[key] = state[key].model_dump(mode="json")
@@ -81,8 +83,9 @@ def state_snapshot(state):
 
 
 class Pipeline:
-    def __init__(self, gateway=None):
+    def __init__(self, gateway=None, model=None):
         self.gateway = gateway
+        self.model = model
 
     def run(self, incident, use_llm=False, at=None, on_step=None):
         incident = Incident.model_validate(incident.model_dump() if isinstance(incident, Incident) else incident)
@@ -91,8 +94,19 @@ class Pipeline:
             raise ValueError("Analysis time must include a timezone")
         started = time.perf_counter()
         run_id = str(uuid4())
-        trace, steps = [], []
+        trace, steps, call_records = [], [], []
         gateway = self.gateway
+
+        def record_call(component, succeeded, error_code=None):
+            audit = getattr(gateway, "last_call", None)
+            if isinstance(gateway, GeminiGateway) and isinstance(audit, LLMCallRecord):
+                call = audit.model_copy(deep=True)
+            else:
+                call = LLMCallRecord(component=component, requested_model="injected" if gateway else "not_initialized",
+                                     source="injected_gateway" if gateway else "configuration",
+                                     succeeded=succeeded, output_validated=succeeded, error_code=error_code)
+            call_records.append(call)
+            event(component, "llm_audit", mode="llm" if succeeded else "fallback", audit=call.model_dump(mode="json"))
 
         def event(component, action, mode="deterministic", duration_ms=None, **details):
             trace.append(Event(run_id=run_id, component=component, action=action,
@@ -116,14 +130,24 @@ class Pipeline:
             tick = time.perf_counter()
             try:
                 if gateway is None:
-                    gateway = GeminiGateway()
+                    gateway = GeminiGateway(model=self.model)
                 response = gateway.call(component, schema, context)
                 response = schema.model_validate(response.model_dump() if hasattr(response, "model_dump") else response)
+                record_call(component, True)
                 event(component, "llm_completed", mode="llm",
                       duration_ms=round((time.perf_counter()-tick)*1000, 3), output=response.model_dump(mode="json"))
-                return response, {}
-            except Exception:
-                error = f"{component}: LLM call/validation failed; deterministic fallback"
+                update = {}
+                if getattr(response, "human_review", False):
+                    reason = f"{component} LLM requested human review; retained across revisions."
+                    requests = list(state["review_requests"])
+                    if reason not in requests:
+                        requests.append(reason)
+                    update["review_requests"] = requests
+                return response, update
+            except Exception as exc:
+                code = exc.code if isinstance(exc, GatewayError) else "CALL_OR_VALIDATION_FAILED"
+                record_call(component, False, code)
+                error = f"{component}: {code}; deterministic fallback"
                 event(component, "fallback", mode="fallback", reason=error,
                       duration_ms=round((time.perf_counter()-tick)*1000, 3))
                 return default, {"llm_active": False, "errors": [*state["errors"], error]}
@@ -195,7 +219,7 @@ class Pipeline:
 
         def safety_node(state):
             return {"safety": reference("SafetyGate", agents.safety_gate, state["assessment"], state["risk"],
-                                        state["evidence"], state["proposal"], state["critic"], state["errors"])}
+                                        state["evidence"], state["proposal"], state["critic"], state["errors"], state["review_requests"])}
 
         def reporter_node(state):
             mode = "fallback" if state["errors"] else "llm" if use_llm else "deterministic"
@@ -203,6 +227,9 @@ class Pipeline:
             report = agents.reporter_agent(state["incident"], state["assessment"], state["risk"], state["evidence"],
                                             state["proposal"], state["safety"], mode, run_id)
             report += f"\nEVIDENCE QUALITY\nIndicator completeness: {state['quality'].completeness}\n{state['quality'].note}\n"
+            report += "\nLLM INTEGRATION AUDIT\n" + "\n".join(
+                f"{call.component}: {call.source}; model={call.requested_model}; attempts={len(call.attempts)}; "
+                f"validated={call.output_validated}; error={call.error_code or 'none'}" for call in call_records)
             event("Reporter", "completed")
             return {"report": report}
 
@@ -214,7 +241,7 @@ class Pipeline:
         nodes = dict(zip(NODE_NAMES, (evidence_node, planner_node, information_node, assessment_node, risk_node,
                                      decision_node, critic_node, revision_node, safety_node, reporter_node, human_node)))
         graph = build_workflow(nodes, planner_route, critic_route)
-        state = {"incident": incident, "errors": [], "revisions": 0, "llm_active": use_llm}
+        state = {"incident": incident, "errors": [], "revisions": 0, "llm_active": use_llm, "review_requests": []}
         event("Coordinator", "run_started", requested_mode="llm" if use_llm else "deterministic", orchestrator="langgraph")
         for update in graph.stream(state, config={"recursion_limit": 30}, stream_mode="updates"):
             for node, values in update.items():
@@ -232,4 +259,5 @@ class Pipeline:
                          assessment=state["assessment"], risk=state["risk"], proposal=state["proposal"],
                          critic=state["critic"], safety=state["safety"], revisions=state["revisions"],
                          errors=state["errors"], trace=trace, report=state["report"], duration_ms=duration,
-                         orchestrator="langgraph", evidence_quality=state["quality"], graph_steps=steps)
+                         orchestrator="langgraph", evidence_quality=state["quality"], graph_steps=steps,
+                         llm_calls=call_records, llm_review_requests=state["review_requests"])

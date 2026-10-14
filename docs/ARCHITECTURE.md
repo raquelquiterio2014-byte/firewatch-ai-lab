@@ -1,4 +1,4 @@
-# FireWatch AI — V3 Architecture
+# FireWatch AI — V4 Architecture
 
 ## Dependent state and real branches
 
@@ -59,3 +59,11 @@ Editing the form invalidates current cards, report and review controls until ano
 The protocol saves every trial RunResult and then its completed PilotEvaluation in SQLite. If evaluation is interrupted, completed trial runs may exist without a final pilot record. There is no evaluation resume/checkpointer. Later human reviews are separate records and do not retroactively modify the saved evaluation metrics. The new table is created alongside existing tables, without rewriting V1/V2 run snapshots.
 
 The GUI uses the existing worker/queue pattern for evaluation. Summary cards and per-case rows are derived from stored typed data. CSV exports flattened comparisons and trial run IDs; JSON preserves the full evaluation structure. The Evidence inspector displays declarations and flags without changing the underlying reference rules.
+
+## V4 review propagation and audit
+
+Planner and Critic retain backward-compatible default review fields for loading old snapshots. Gemini output requires an explicit boolean human_review field; omitted or string flags are rejected. Every successfully validated LLM flag is accumulated in WorkflowState.review_requests before semantic critique. The Safety Gate consumes those retained requests after the bounded revision loop. RunResult and SharedState preserve llm_review_requests, so a final false flag cannot erase an earlier true one.
+
+The gateway creates a sanitized LLMCallRecord per invocation. HTTP attempt outcomes and structured-validation status are stored in the run and actual trace events. Injected gateways are labeled separately from the built-in Gemini adapter; missing key has no HTTP attempts. Raw provider errors, authorization headers and credential values are not exported. Requested model and provider-reported version are separate fields; token counts are recorded only when supplied.
+
+ConnectionProbe uses the same adapter but no incident data. Its audit is persisted in provider_checks and displayed separately from scenario analysis. It has no effect on deterministic pilot labels or metrics. A successful probe is evidence of JSON access at that time, not fire-model validation, calibrated reliability or a guarantee that later calls succeed. Automated tests use patched transports/injected gateways; no live-provider claim follows from them.

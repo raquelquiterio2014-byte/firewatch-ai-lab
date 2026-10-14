@@ -154,7 +154,7 @@ class GatewayTests(unittest.TestCase):
             def __enter__(self): return self
             def __exit__(self, *_): pass
             def read(self, *_):
-                return json.dumps({"candidates": [{"content": {"parts": [{"text": json.dumps({"tool": "assess_evidence", "rationale": "Test"})}]}}]}).encode()
+                return json.dumps({"candidates": [{"content": {"parts": [{"text": json.dumps({"tool": "assess_evidence", "rationale": "Test", "human_review": False})}]}}]}).encode()
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}), patch("firewatch.gateway.urlopen", return_value=Response()) as network:
             result = GeminiGateway().call("Planner", Plan, {})
             request = network.call_args.args[0]
