@@ -1,0 +1,36 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	evidence(evidence)
+	planner(planner)
+	information_request(information_request)
+	fire_assessment(fire_assessment)
+	risk_exposure(risk_exposure)
+	decision(decision)
+	critic(critic)
+	revision(revision)
+	safety_gate(safety_gate)
+	reporter(reporter)
+	human_gate(human_gate)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> evidence;
+	critic -.-> revision;
+	critic -.-> safety_gate;
+	decision --> critic;
+	evidence --> planner;
+	fire_assessment --> risk_exposure;
+	information_request --> fire_assessment;
+	planner -.-> fire_assessment;
+	planner -.-> information_request;
+	reporter --> human_gate;
+	revision --> decision;
+	risk_exposure --> decision;
+	safety_gate --> reporter;
+	human_gate --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

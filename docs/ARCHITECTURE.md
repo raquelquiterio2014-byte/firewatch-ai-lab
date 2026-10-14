@@ -1,51 +1,53 @@
-# Architecture
+# FireWatch AI — V2 Architecture
 
-## Dependencies and state
+## Dependent state and real branches
 
-`Incident` is validated before execution. `EvidenceResult`, `Assessment`, `Risk`, `Proposal`, `CriticReview` and `SafetyResult` are dependent typed outputs collected in `RunResult`. Each run has a UUID, schema/rule version, input snapshot, real events and duration.
+The `Pipeline` builds a LangGraph `StateGraph(WorkflowState)` for each run. The graph state is a TypedDict containing Pydantic-validated incident and specialist outputs. Every node returns updates consumed by later nodes. RunResult validates the finished output, including provenance, Safety Gate, revisions, trace and graph-step snapshots.
 
 ```mermaid
 flowchart TD
-    Input[Validated incident] --> Evidence[Evidence checks]
-    Evidence --> Planner[Planner selects route]
-    Planner --> Route{Information needed?}
-    Route -->|Yes| Request[Record human information request]
-    Route -->|No| Assessment[Fire assessment]
-    Request --> Assessment
-    Assessment --> Risk[Risk and exposure]
-    Risk --> Decision[Decision proposal]
-    Decision --> Critic{Critic review}
-    Critic -->|First rejection| Revision[Revise once]
-    Revision --> Critic
-    Critic -->|Approved or limit reached| Safety[Deterministic Safety Gate]
-    Safety --> Report[Report and persisted trace]
-    Report --> Human[Recorded human review]
+    E[Evidence checks and quality] --> P[Planner]
+    P -->|Direct route| A[Fire assessment]
+    P -->|Information needed| I[Record human information request]
+    I --> A
+    A --> R[Risk and exposure]
+    R --> D[Decision proposal]
+    D --> C{Critic}
+    C -->|First rejection| V[Increment revision count]
+    V --> D
+    C -->|Approved or revision exhausted| S[Safety Gate]
+    S --> F[Explainable report]
+    F --> H[Pending or optional human review]
 ```
 
-The revision box represents another Decision invocation. After its review, the coordinator always proceeds to Safety Gate, even if the Critic still rejects. No unbounded agent loop exists.
+The Planner route selects whether the information-request node executes. It does not contact external sources or fill unknown fields. The Critic route executes Decision again only after the first rejection. A second rejection proceeds to Safety Gate with mandatory human review. Recursion limit 30 is an additional guard; the application enforces at most one revision independently.
 
-## Honest component boundaries
+`docs/workflow.mmd` is produced by the same compiled graph factory used for execution. The GUI renders its corresponding topology and highlights visited nodes. The route displayed below it comes from actual LangGraph stream updates, never a hard-coded list of claimed calls.
 
-In deterministic mode, all components are ordinary rule-based functions. In hybrid mode, only Planner, Decision and Critic call the configured Gemini adapter. A bounded coordinator executes the selected authorized route; the implementation does not use provider function-calling or LangGraph. This distinction matters when presenting the portfolio.
+## Rule-based and LLM responsibilities
 
-`assess_evidence` analyzes the existing record. `request_information_then_assess` first creates a pending-human-information trace event and then analyzes the existing record. Both retain mandatory evidence checks; the LLM cannot skip them.
+In deterministic mode, nodes use educational rules. In hybrid mode, Planner, Decision and Critic may call the Gemini adapter. Evidence, Fire Assessment, Risk/Exposure, Safety Gate and Reporter remain deterministic. LangGraph does not itself make these components LLM agents.
 
-The deterministic Critic checks classifications, priority, evidence IDs and required review before the optional LLM Critic. A rejected LLM proposal can remain visible as an unapproved proposal after the revision limit; the report and summary cards retain the reference assessment and risk, while Safety Gate requires human review.
+The deterministic Critic checks classification, contextual priority, citations and review requirements before the optional LLM Critic. Rejected proposals remain visibly unapproved after the limit. Reference assessment and contextual priority are retained; Safety Gate cannot be overridden by a proposal or later human-review record.
 
-## Provenance and persistence
+The gateway retains environment-only credentials, at most two attempts per call, timeout, structured validation and explicit fallback. The default mode does not call an external API. Live Gemini compatibility has not been verified; provider parsing and agent behavior are tested with offline doubles.
 
-Sources, methods and provenance are explicitly supplied metadata. They are not authenticated by this version. The GUI accepts one normalized manual record. The backend can receive multiple evidence records, but does not automatically reconcile their free text against normalized incident fields. `conflicts` is an explicit flag.
+## Evidence quality
 
-SQLite stores run snapshots as the authoritative record, plus incident/evidence tables for convenient lookup. Editing an incident does not rewrite older run snapshots. Human reviews are separate appended records linked to an existing run. Reviewer identity is self-reported; no login or authorization system is implemented.
+`EvidenceQuality` reports known/unknown smoke, flames and exposure fields, stale/future record IDs, manually flagged conflicts and counts of declared provenance types. COMPLETE means only that those three indicator fields are known. It does not mean evidence is correct, current, independent or sufficient for an operational decision. No confidence score or calibrated probability is computed.
 
-JSONL is an additional trace export after database commit. If disk writing fails, the run may already exist in SQLite; recover it from saved-run history. Do not rerun an incident just to recreate its missing trace file without first checking history.
+The six-hour stale policy and five-minute future-time tolerance are demonstration choices. Weather and vegetation inputs are preserved context, not a fire-spread model. Source/provenance and conflict flags are declared metadata. Normalized fields drive rules; free text is not automatically extracted or reconciled.
 
-## Concurrency
+## Streaming and persistence
 
-Long analysis/evaluation jobs run in a worker thread. Workers never update Tk widgets; they put results on a queue polled by the UI thread. Analyze and Evaluate are disabled while a job is running. Database operations open, commit and close their own connection in the calling thread.
+LangGraph streams node updates. The coordinator creates detached `GraphStep` snapshots after each completed node, logs actual events and optionally calls an observer. GUI workers send updates through a queue; only the Tk thread updates widgets.
 
-The LLM adapter has a fixed Google API host, configurable model name, environment-only credentials, two attempts maximum and safe error reporting. API output passes through Pydantic. Mocked tests do not establish live API compatibility, calibrated reliability or resistance to all prompt injection.
+The live State view is provisional. Only a completed RunResult is saved in SQLite; intermediate snapshots are stored inside that completed result. There is no LangGraph checkpointer, pause/resume checkpoint or crash recovery for unfinished analyses. Human Gate records a pending requirement, while the user's later review is appended separately through SQLite. It is not a LangGraph interrupt.
 
-## V1 state presentation
+SQLite's run snapshot remains authoritative. Incident/evidence tables provide convenient lookup; editing an observation does not rewrite older run snapshots. Human reviewer identity is self-reported. Database operations create, commit and close their own connections in the calling thread.
 
-`SharedState.from_run` validates detached copies of completed outputs and review records. This view is derived from the existing run snapshot; it does not replace the coordinator or represent a live message bus. Agents shows readable results and modes from actual events; Trace retains raw event detail. State includes later human-review records without rewriting the initial Safety Gate result.
+JSONL is an additional export after database commit. If file writing fails, the run may already exist in SQLite; check saved-run history first. V1 snapshots load with default empty graph steps and no quality summary. `reference_pipeline.py` preserves the V1 coordinator for regression comparison.
+
+## Input/result separation
+
+Editing the form invalidates current cards, report and review controls until another analysis or history load. If edits occur while a job is running, the completed earlier input is saved but not presented as a result for the edited form. Preset selection changes the input; reanalysis is always needed. Existing saved runs remain accessible through history.

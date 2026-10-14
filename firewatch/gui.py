@@ -22,9 +22,12 @@ class FireWatchApp:
         self.current = None
         self.evaluation = None
         self.busy = False
+        self.filling_form = False
+        self.running_fingerprint = None
+        self.live_steps = []
         self.messages = queue.Queue()
         self.fields = {}
-        root.title("FireWatch AI — V1 | Traceable Workflow")
+        root.title("FireWatch AI — V2 | Conditional Agent Workflow")
         root.geometry("1120x760")
         root.minsize(760, 560)
         root.configure(bg="#101d30")
@@ -40,7 +43,7 @@ class FireWatchApp:
         header = tk.Frame(root, bg="#101d30", padx=20, pady=14)
         header.pack(fill="x")
         ttk.Label(header, text="FIREWATCH AI", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(header, text="V1 • Specialized components • Shared state • Human review", style="Hero.TLabel").pack(anchor="w")
+        ttk.Label(header, text="V2 • Conditional workflow • Evidence quality • Human review", style="Hero.TLabel").pack(anchor="w")
         tk.Label(header, text="EDUCATIONAL PROTOTYPE  |  Synthetic examples  |  No independent fire diagnosis",
                  bg="#101d30", fg="#ffcb77", font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 0))
         cards = tk.Frame(root, bg="#edf1f5", padx=15, pady=10)
@@ -59,11 +62,13 @@ class FireWatchApp:
         self.tabs.add(self.incident_tab, text="Incident")
         self.build_form()
         self.outputs = {}
-        for name in ("Multi-Agent Analysis", "Evidence", "Safety & Human Gate", "Explainable Report", "Agent Trace", "Shared State", "Evaluation"):
+        for name in ("Multi-Agent Analysis", "Workflow", "Evidence", "Safety & Human Gate", "Explainable Report", "Agent Trace", "Shared State", "Evaluation"):
             tab = ttk.Frame(self.tabs)
             short_labels = {"Multi-Agent Analysis": "Agents", "Safety & Human Gate": "Safety / Review",
                             "Explainable Report": "Report", "Agent Trace": "Trace", "Shared State": "State"}
             self.tabs.add(tab, text=short_labels.get(name, name))
+            if name == "Workflow":
+                self.build_workflow_canvas(tab)
             if name == "Safety & Human Gate":
                 self.build_review(tab)
             if name == "Explainable Report":
@@ -88,7 +93,84 @@ class FireWatchApp:
         ttk.Label(footer, textvariable=self.status, wraplength=1050).pack(anchor="w")
         self.load_scenario()
         self.refresh_history()
+        for var in self.fields.values():
+            var.trace_add("write", lambda *_: self.input_changed())
+        self.conflict.trace_add("write", lambda *_: self.input_changed())
+        self.description.bind("<<Modified>>", self.description_changed)
+        self.description.edit_modified(False)
         root.after(100, self.poll)
+
+    def build_workflow_canvas(self, tab):
+        panel = ttk.Frame(tab)
+        panel.pack(fill="x", padx=10, pady=6)
+        self.flow_canvas = tk.Canvas(panel, height=230, bg="#edf1f5", highlightthickness=0,
+                                     scrollregion=(0, 0, 650, 560))
+        scrollbar = ttk.Scrollbar(panel, orient="vertical", command=self.flow_canvas.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.flow_canvas.configure(yscrollcommand=scrollbar.set)
+        self.flow_canvas.pack(fill="x", expand=True)
+        self.flow_positions = {
+            "evidence": (210, 35), "planner": (210, 95), "information_request": (500, 155),
+            "fire_assessment": (210, 155), "risk_exposure": (210, 215), "decision": (210, 275),
+            "critic": (210, 335), "revision": (500, 275), "safety_gate": (210, 395),
+            "reporter": (210, 455), "human_gate": (210, 515),
+        }
+        connections = [("evidence", "planner"), ("planner", "fire_assessment"),
+                       ("planner", "information_request"), ("information_request", "fire_assessment"),
+                       ("fire_assessment", "risk_exposure"), ("risk_exposure", "decision"),
+                       ("decision", "critic"), ("critic", "revision"), ("revision", "decision"),
+                       ("critic", "safety_gate"), ("safety_gate", "reporter"), ("reporter", "human_gate")]
+        for source, target in connections:
+            x1, y1 = self.flow_positions[source]
+            x2, y2 = self.flow_positions[target]
+            if x1 == x2:
+                points = (x1, y1+18, x2, y2-18)
+            elif y1 == y2:
+                points = (x1-90, y1, x2+90, y2)
+            else:
+                points = (x1+90, y1, x2, y1, x2, y2+(18 if y2 < y1 else -18))
+            self.flow_canvas.create_line(*points, arrow="last", fill="#7b8999", width=2)
+        self.flow_boxes = {}
+        for name, (x, y) in self.flow_positions.items():
+            box = self.flow_canvas.create_rectangle(x-90, y-18, x+90, y+18, fill="white", outline="#7b8999", width=2)
+            self.flow_boxes[name] = box
+            self.flow_canvas.create_text(x, y, text=name.replace("_", " ").title(), font=("Segoe UI", 9))
+
+    def refresh_flow(self, steps):
+        visited = {step.node for step in steps}
+        current = steps[-1].node if steps else None
+        for name, box in self.flow_boxes.items():
+            self.flow_canvas.itemconfigure(box, fill="#ffcb77" if name == current else "#b8e4d6" if name in visited else "white")
+        path = " → ".join(step.node.replace("_", " ") for step in steps)
+        self.set_output("Workflow", "EXECUTED NODES — amber: last completed; green: previously visited\n\n"
+                        + (path or "No nodes executed yet.")
+                        + "\n\nPlanner selects the information-request branch or direct assessment."
+                        " Critic can return to Decision once; remaining issues go to human review.")
+
+    def form_fingerprint(self):
+        return (tuple((key, var.get()) for key, var in self.fields.items()),
+                self.conflict.get(), self.description.get("1.0", "end").strip())
+
+    def description_changed(self, _):
+        if self.description.edit_modified():
+            self.input_changed()
+            self.description.edit_modified(False)
+
+    def input_changed(self):
+        if self.filling_form:
+            return
+        self.card_vars["Assessment"].set("NOT ANALYZED")
+        self.card_vars["Priority"].set("NOT ANALYZED")
+        self.card_vars["Human review"].set("ANALYSIS NEEDED")
+        self.card_vars["Mode"].set("PENDING")
+        self.current = None
+        if not self.busy:
+            self.status.set("Input changed — analyze again. Previous results remain saved in history.")
+            for name in self.outputs:
+                if name != "Evaluation":
+                    self.set_output(name, "Input changed. Run Analyze Incident or load a saved run.")
+            for box in self.flow_boxes.values():
+                self.flow_canvas.itemconfigure(box, fill="white")
 
     def build_form(self):
         bar = ttk.Frame(self.incident_tab)
@@ -170,6 +252,7 @@ class FireWatchApp:
                   wraplength=900).pack(anchor="w", padx=14)
 
     def fill(self, incident):
+        self.filling_form = True
         record = incident.evidence[0]
         for key, var in self.fields.items():
             value = getattr(incident, key, None) if hasattr(incident, key) else getattr(record, key)
@@ -179,6 +262,9 @@ class FireWatchApp:
         self.conflict.set(record.conflicts)
         self.description.delete("1.0", "end")
         self.description.insert("1.0", incident.description)
+        self.description.edit_modified(False)
+        self.filling_form = False
+        self.input_changed()
 
     def load_scenario(self):
         self.fill(get_scenario(self.scenario.get()))
@@ -220,8 +306,12 @@ class FireWatchApp:
             messagebox.showerror("Invalid observation", str(exc))
             return
         use_llm = self.llm.get()
+        self.running_fingerprint = self.form_fingerprint()
+        self.live_steps = []
+        self.refresh_flow([])
         def job():
-            result = Pipeline().run(incident, use_llm=use_llm)
+            result = Pipeline().run(incident, use_llm=use_llm,
+                                    on_step=lambda step: self.messages.put(("progress", step, None)))
             self.store.save(result)
             return result
         self.start_job("analysis", job)
@@ -233,6 +323,13 @@ class FireWatchApp:
         try:
             while True:
                 kind, value, error = self.messages.get_nowait()
+                if kind == "progress":
+                    self.live_steps.append(value)
+                    self.refresh_flow(self.live_steps)
+                    self.set_output("Shared State", "INTERMEDIATE GRAPH STATE — analysis in progress\n\n"
+                                    + json.dumps(value.state, indent=2, ensure_ascii=False))
+                    self.status.set(f"Completed node {value.step}: {value.node}")
+                    continue
                 self.busy = False
                 self.run_button.configure(state="normal")
                 self.eval_button.configure(state="normal")
@@ -243,6 +340,9 @@ class FireWatchApp:
                     self.display(value)
                     self.tabs.select(1)
                     self.status.set(f"Saved run {value.run_id} | {value.duration_ms:.1f} ms | {value.mode}")
+                    if self.form_fingerprint() != self.running_fingerprint:
+                        self.input_changed()
+                        self.status.set("Result saved for the earlier input. Current form changed; analyze again or load the saved run.")
                 else:
                     self.evaluation = value
                     self.set_output("Evaluation", f"{value['passed']}/{value['total']} synthetic scenarios matched project labels.\n"
@@ -268,10 +368,12 @@ class FireWatchApp:
         self.card_vars["Mode"].set(result.mode.upper())
         self.set_output("Multi-Agent Analysis", agent_summary(result))
         evidence = {"records": [e.model_dump(mode="json") for e in result.incident.evidence],
-                    "analysis": result.evidence_result.model_dump()}
+                    "analysis": result.evidence_result.model_dump(),
+                    "quality": result.evidence_quality.model_dump() if result.evidence_quality else "Not recorded by this older version"}
         self.set_output("Evidence", json.dumps(evidence, indent=2, ensure_ascii=False))
         self.set_output("Explainable Report", result.report)
         self.set_output("Agent Trace", "\n".join(e.model_dump_json() for e in result.trace))
+        self.refresh_flow(result.graph_steps)
         self.update_review_output()
 
     def update_review_output(self):

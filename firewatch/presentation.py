@@ -22,7 +22,7 @@ def agent_summary(result):
          + "\n".join(result.safety.reasons)),
         ("Reporter", "Explainable report available in the Report tab."),
     ]
-    return (f"COMPLETED RUN: {result.run_id}\nExecution mode: {result.mode.upper()}\n"
-            "Reference pipeline in deterministic mode; optional LLM calls are identified below.\n\n"
+    return (f"COMPLETED RUN: {result.run_id}\nExecution mode: {result.mode.upper()}\nOrchestrator: {result.orchestrator}\n"
+            "Rule-based specialists in deterministic mode; optional LLM calls are identified below.\n\n"
             + "\n\n".join(f"{name} [{component_mode(result, name)}]\n{text}" for name, text in entries)
             + "\n\nHuman Gate: review records are in Safety / Review and Shared State.\n")

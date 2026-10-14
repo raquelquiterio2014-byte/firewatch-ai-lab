@@ -1,0 +1,219 @@
+{
+  "mode": "deterministic",
+  "synthetic": true,
+  "total": 10,
+  "passed": 10,
+  "rows": [
+    {
+      "scenario": "01 \u2014 No reported indicators",
+      "expected": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": false
+      },
+      "actual": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": false
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "836c56bc-cef1-40a0-97d4-203fc4d54756",
+      "duration_ms": 10.889
+    },
+    {
+      "scenario": "02 \u2014 Smoke, unknown exposure",
+      "expected": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "727ddf80-0d60-4189-9311-6274f89beecc",
+      "duration_ms": 7.864
+    },
+    {
+      "scenario": "03 \u2014 Flames near people",
+      "expected": {
+        "assessment": "STRONG_INDICATION",
+        "risk": "HIGH",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "STRONG_INDICATION",
+        "risk": "HIGH",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "7befa722-a8f0-47f9-b4c7-6dc53d12207c",
+      "duration_ms": 6.351
+    },
+    {
+      "scenario": "04 \u2014 Dry vegetation, unknown indicators",
+      "expected": {
+        "assessment": "INSUFFICIENT_EVIDENCE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "INSUFFICIENT_EVIDENCE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "bd3fad27-cf7e-4638-9e56-3a71e7e2577f",
+      "duration_ms": 6.898
+    },
+    {
+      "scenario": "05 \u2014 Conflicting reports",
+      "expected": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "MEDIUM",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "MEDIUM",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "761f4634-cd3a-4076-9e2d-730af8c49c70",
+      "duration_ms": 6.596
+    },
+    {
+      "scenario": "06 \u2014 Old observation",
+      "expected": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "92c947a4-98a7-4fa1-98d0-9b7362045e2d",
+      "duration_ms": 6.823
+    },
+    {
+      "scenario": "07 \u2014 Smoke, no reported exposure",
+      "expected": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "MEDIUM",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "POSSIBLE_FIRE",
+        "risk": "MEDIUM",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "0e111c16-e20d-4135-b598-e1629411d1a2",
+      "duration_ms": 6.224
+    },
+    {
+      "scenario": "08 \u2014 Flames, unknown exposure",
+      "expected": {
+        "assessment": "STRONG_INDICATION",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "STRONG_INDICATION",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "7ee4b661-a3ea-4639-a817-eab1566cf0cf",
+      "duration_ms": 6.514
+    },
+    {
+      "scenario": "09 \u2014 Dry weather, no indicators",
+      "expected": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": false
+      },
+      "actual": {
+        "assessment": "NO_INDICATION",
+        "risk": "LOW",
+        "human_review": false
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "fac1e847-1f4a-491f-95e0-3a4e8125d85d",
+      "duration_ms": 7.257
+    },
+    {
+      "scenario": "10 \u2014 Partial observation",
+      "expected": {
+        "assessment": "INSUFFICIENT_EVIDENCE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "actual": {
+        "assessment": "INSUFFICIENT_EVIDENCE",
+        "risk": "UNDETERMINED",
+        "human_review": true
+      },
+      "field_agreement": {
+        "assessment": true,
+        "risk": true,
+        "human_review": true
+      },
+      "passed": true,
+      "run_id": "87882895-26a4-4904-9af2-acdc6e54beda",
+      "duration_ms": 7.385
+    }
+  ],
+  "limitation": "Agreement with educational rules only; no real-world fire accuracy claim."
+}

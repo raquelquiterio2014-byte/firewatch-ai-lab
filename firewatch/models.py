@@ -118,6 +118,24 @@ class Event(Model):
     details: dict = Field(default_factory=dict)
 
 
+class EvidenceQuality(Model):
+    completeness: Literal["COMPLETE", "PARTIAL", "INSUFFICIENT"]
+    known_indicator_fields: int = Field(ge=0, le=3)
+    unknown_fields: list[str]
+    stale_ids: list[str]
+    future_ids: list[str]
+    flagged_conflicts: list[str]
+    provenance_counts: dict[str, int]
+    note: str = "Descriptive checks only; source declarations are not independently verified. No probability or confidence score."
+
+
+class GraphStep(Model):
+    step: int = Field(ge=1)
+    node: str
+    run_id: str
+    state: dict
+
+
 class RunResult(Model):
     schema_version: str = "1.0"
     rules_version: str = "educational-1.0"
@@ -137,6 +155,9 @@ class RunResult(Model):
     trace: list[Event]
     report: str
     duration_ms: float
+    orchestrator: str = "python-v1"
+    evidence_quality: EvidenceQuality | None = None
+    graph_steps: list[GraphStep] = Field(default_factory=list)
 
 
 class HumanReview(Model):
@@ -169,6 +190,8 @@ class SharedState(Model):
     revision_count: int = Field(ge=0, le=1)
     errors: list[str]
     human_reviews: list[HumanReview] = Field(default_factory=list)
+    orchestrator: str = "python-v1"
+    evidence_quality: EvidenceQuality | None = None
 
     @classmethod
     def from_run(cls, result, reviews=()):
@@ -185,4 +208,6 @@ class SharedState(Model):
             "safety_gate": result.safety.model_dump(mode="json"),
             "revision_count": result.revisions, "errors": list(result.errors),
             "human_reviews": [review.model_dump(mode="json") for review in reviews],
+            "orchestrator": result.orchestrator,
+            "evidence_quality": result.evidence_quality.model_dump(mode="json") if result.evidence_quality else None,
         })

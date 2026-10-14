@@ -1,4 +1,4 @@
-# FireWatch AI — V1
+# FireWatch AI — V2
 
 **Educational multi-agent prototype for fire-indicator analysis, evidence traceability and human review.**
 
@@ -6,15 +6,22 @@ Developed by **Raquel Cruz** as an educational project inspired by the evidence,
 
 FireWatch evaluates **supplied observations** about vegetation and the urban–vegetation interface. It distinguishes fire indications, contextual priority and evidence gaps. It does not independently diagnose a fire, forecast propagation, issue operational commands or establish that an area is safe.
 
-## V1 — From a Form to a Traceable Workflow
+## V2 — Conditional Workflow and Evidence Quality
 
-This milestone adds readable component summaries in **Agents** and a typed completed-run snapshot in **State**, including human-review records. Package version: **1.1.0**. The earlier local V0 may differ from this repository. Download or clone the current version into a separate folder and open the project in PyCharm, preserving any previous local work.
+Package version: **2.0.0**. LangGraph now executes the specialist nodes with conditional Planner routing and a Critic → revision → Decision loop limited to one revision. **Workflow** shows the compiled topology and actually visited nodes; **State** receives intermediate snapshots during analysis and displays the validated final snapshot afterward.
+
+**Evidence Quality** describes how many of the three indicator fields are known, plus flagged conflicts, stale/future timestamps and declared provenance. It does not calculate confidence or authenticate a source. Editing the observation clears previously displayed results; the previous run remains in history.
+
+Windows and PyCharm remain the local validation environment. Start in deterministic mode without a key. Update dependencies before launching V2: `python -m pip install -r requirements.txt` using the project interpreter. Preserve the V1 folder and its `data/` directory before replacing your local version. V1 saved snapshots remain readable by V2.
+
+V2 guide: [docs/V2_WINDOWS.md](docs/V2_WINDOWS.md).
 
 ## What is implemented
 
 - English Tkinter/ttk desktop interface with scenarios and custom observations.
-- Typed input and output models using Pydantic.
+- Typed input and output models using Pydantic and a LangGraph workflow state.
 - Ten labelled synthetic scenarios and an evaluation screen.
+- Conditional workflow view, streamed state snapshots and descriptive evidence-quality checks.
 - Planner, Evidence, Fire Assessment, Risk/Exposure, Decision, Critic and Reporter components.
 - Deterministic Safety Gate and recorded human approval/rejection.
 - SQLite run snapshots, evidence records, saved-run history and real JSONL trace events.
@@ -24,13 +31,13 @@ This milestone adds readable component summaries in **Agents** and a typed compl
 
 ## Two execution modes
 
-**Deterministic:** works without an API key. It is a modular reference pipeline, not autonomous LLM reasoning. Rules are educational project hypotheses.
+**Deterministic:** works without an API key. LangGraph runs rule-based specialist nodes; graph orchestration itself does not create autonomous LLM reasoning. Rules remain educational project hypotheses.
 
 **Gemini hybrid:** Planner chooses one authorized analysis route, Decision drafts a structured review proposal, and Critic approves or requests revision. The selected route is executed and logged. Fire assessment, contextual priority, evidence checks and Safety Gate remain deterministic. At most one revision is allowed; each API call has at most two attempts with a 20-second request timeout. Missing credentials, provider/network failures or invalid output cause fallback and mandatory review.
 
 `request_information_then_assess` records pending human information; it does not contact an external source and does not invent missing data. The application still analyzes the available observation with explicit unknowns.
 
-The orchestrator is implemented in Python; **LangGraph is not yet integrated**. There is no camera, sensor ingestion, automatic contradiction extraction, MCP server, geospatial layer or live fire-data integration in this release.
+The orchestrator uses **LangGraph 1.2.15**, pinned in requirements.txt. There is no camera, sensor ingestion, automatic contradiction extraction, MCP server, geospatial layer or live fire-data integration in this release.
 
 ## Run on Windows with PyCharm
 
@@ -66,11 +73,12 @@ Select **Use Gemini (optional)** in the GUI. Model availability and structured-o
 |---|---|
 | Incident | Scenario selector, normalized observations, source/provenance and saved-run history |
 | Agents | Actual component results, selected plan, critic verdict and revision count |
-| Evidence | Record IDs, source, method, provenance, age, unknown fields and flagged conflicts |
+| Workflow | Compiled node topology, visited route and live completion updates |
+| Evidence | Record IDs plus descriptive completeness, timestamps, provenance and flagged conflicts |
 | Safety / Review | Mandatory review reasons and reviewer/comment records |
 | Report | Explainable TXT report and JSON export |
 | Trace | Actual events linked to the current run ID |
-| State | Validated snapshot of completed component outputs and recorded human reviews |
+| State | Intermediate graph snapshots during execution; validated final outputs and human reviews afterward |
 | Evaluation | Ten deterministic synthetic cases and expected-versus-actual fields |
 
 The GUI accepts one evidence record per new manual analysis. The backend supports multiple evidence records. Normalized form fields drive the reference rules: free text is **not automatically extracted**. Conflict flags and provenance are entered declarations, not independent verification.
@@ -91,13 +99,13 @@ Tests cover invalid values, unknowns, timestamp validation, stale/conflicting re
 
 ### Local visual validation in PyCharm
 
-Start with **Use Gemini (optional)** unchecked. Analyze **03 — Flames near people** and confirm `STRONG_INDICATION`, `HIGH` and mandatory human review. Inspect **Agents**, **State** and **Trace**, then record a human review, export a report and reload the saved run after restarting the app. Check all eight tabs and form scrolling at your actual Windows resolution.
+Start with **Use Gemini (optional)** unchecked. Analyze **03 — Flames near people** and confirm `STRONG_INDICATION`, `HIGH` and mandatory human review. Inspect **Agents**, **State** and **Trace**, then record a human review, export a report and reload the saved run after restarting the app. Check all nine tabs and form scrolling at your actual Windows resolution.
 
 Automated tests do not establish visual acceptance. Record the observed Windows/PyCharm results separately; a live Gemini call also requires its own validation.
 
 Validation status and limitations: [docs/VALIDATION.md](docs/VALIDATION.md). Architecture and rules: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-V1 passed [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38325068591), including the 25-test suite and the ten-scenario deterministic evaluation. These checks do not validate Windows GUI rendering or a live Gemini call.
+V1 passed [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38325068591). V2 has **35 passing local tests** with LangGraph 1.2.15 and Pydantic 2.14.1, including graph branches, bounded revision, streamed-state persistence, compatibility with V1 results, input-edit invalidation and agreement with the V1 reference for all ten scenarios. Remote CI must be checked for the V2 commit separately. These checks do not validate Windows GUI rendering or a live Gemini call.
 
 ## Rule interpretation
 
@@ -113,6 +121,9 @@ V1 passed [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquit
 The six-hour age policy and priority labels are demonstration choices, not scientifically calibrated thresholds. Dry vegetation or low humidity alone never confirms a fire. No confidence percentages are displayed.
 
 ## References
+
+- LangGraph Graph API: https://docs.langchain.com/oss/python/langgraph/graph-api
+- LangGraph streaming: https://docs.langchain.com/oss/python/langgraph/streaming
 
 - Gemini structured output: https://ai.google.dev/gemini-api/docs/generate-content/structured-output
 

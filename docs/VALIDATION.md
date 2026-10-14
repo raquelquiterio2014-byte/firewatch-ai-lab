@@ -1,4 +1,8 @@
-# Validation record — 12 October 2026
+# Validation record — V2
+
+## V2 increment
+
+Local validation: **35 tests passed** using LangGraph 1.2.15 and Pydantic 2.14.1 on Python 3.12. The ten scenarios matched the V1 reference classifications, risk and Safety Gate decisions. New tests check conditional paths, bounded revision, streamed detached state, descriptive quality, V1 snapshot compatibility and input-edit invalidation. The recorded catalogue result is [v2_evaluation_result.json](v2_evaluation_result.json). V2 GUI rendering and live Gemini remain unverified here; follow [V2_WINDOWS.md](V2_WINDOWS.md).
 
 ## V1 increment
 
@@ -23,7 +27,7 @@ Tkinter is importable in the development environment, but a graphical display is
 On Windows:
 
 1. Launch `run_gui.bat` or `python main.py`.
-2. Inspect at 1366×768 and a larger resolution; resize to the minimum supported window. Confirm form scrolling, readable cards and access to all eight tabs.
+2. Inspect at 1366×768 and a larger resolution; resize to the minimum supported window. Confirm form scrolling, readable cards and access to all nine tabs.
 3. Run scenario 03. Expect STRONG_INDICATION, HIGH and REQUIRED human review.
 4. Run scenario 01. Expect NO_INDICATION, LOW and OPTIONAL review; confirm the report does not claim safety.
 5. Enter humidity 101 or negative wind. Confirm input is rejected before analysis.
