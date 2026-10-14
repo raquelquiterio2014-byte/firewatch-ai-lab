@@ -18,6 +18,29 @@ FireStatus = Literal["NO_INDICATION", "POSSIBLE_FIRE", "STRONG_INDICATION", "INS
 RiskLevel = Literal["LOW", "MEDIUM", "HIGH", "UNDETERMINED"]
 
 
+class FireContext(Model):
+    """Declared context, never inferred from prose or treated as a fire diagnosis."""
+    fuel_type: Literal["grass", "shrub", "forest", "mixed", "unknown"] = "unknown"
+    vegetation_density: Literal["sparse", "moderate", "dense", "unknown"] = "unknown"
+    slope_deg: float | None = Field(default=None, ge=0, le=90)
+    wind_direction: Literal["N", "NE", "E", "SE", "S", "SW", "W", "NW", "unknown"] = "unknown"
+    gust_kmh: float | None = Field(default=None, ge=0, le=500)
+    distance_to_people_m: float | None = Field(default=None, ge=0, le=1000000)
+    distance_to_infrastructure_m: float | None = Field(default=None, ge=0, le=1000000)
+    people_present: Observation = "unknown"
+    critical_infrastructure: Observation = "unknown"
+    access_status: Literal["open", "limited", "blocked", "unknown"] = "unknown"
+
+
+class ContextResult(Model):
+    values: FireContext
+    evidence_ids: list[str]
+    unknown_fields: list[str]
+    concerns: list[str]
+    human_review_required: bool
+    note: str = "Declared context only. No spread forecast, calibrated thresholds or independently verified exposure. Core fire and priority rules are unchanged."
+
+
 class Evidence(Model):
     id: str = Field(default_factory=lambda: str(uuid4()))
     source: str = Field(min_length=1, max_length=200)
@@ -49,6 +72,8 @@ class Incident(Model):
     vegetation: Literal["dry", "not_dry", "unknown"] = "unknown"
     description: str = Field(default="", max_length=5000)
     evidence: list[Evidence] = Field(min_length=1, max_length=50)
+    context: FireContext = Field(default_factory=FireContext)
+    context_evidence_ids: list[str] = Field(default_factory=list, max_length=50)
 
     @field_validator("location")
     @classmethod
@@ -61,6 +86,8 @@ class Incident(Model):
     def unique_evidence(self):
         if len({e.id for e in self.evidence}) != len(self.evidence):
             raise ValueError("Evidence IDs must be unique")
+        if not set(self.context_evidence_ids) <= {e.id for e in self.evidence}:
+            raise ValueError("Context must cite existing evidence IDs")
         return self
 
 
@@ -187,6 +214,7 @@ class RunResult(Model):
     graph_steps: list[GraphStep] = Field(default_factory=list)
     llm_calls: list[LLMCallRecord] = Field(default_factory=list)
     llm_review_requests: list[str] = Field(default_factory=list)
+    context_result: ContextResult | None = None
 
 
 class HumanReview(Model):
@@ -223,6 +251,7 @@ class SharedState(Model):
     evidence_quality: EvidenceQuality | None = None
     llm_calls: list[LLMCallRecord] = Field(default_factory=list)
     llm_review_requests: list[str] = Field(default_factory=list)
+    context_result: ContextResult | None = None
 
     @classmethod
     def from_run(cls, result, reviews=()):
@@ -243,6 +272,7 @@ class SharedState(Model):
             "evidence_quality": result.evidence_quality.model_dump(mode="json") if result.evidence_quality else None,
             "llm_calls": [call.model_dump(mode="json") for call in result.llm_calls],
             "llm_review_requests": list(result.llm_review_requests),
+            "context_result": result.context_result.model_dump(mode="json") if result.context_result else None,
         })
 
 
@@ -250,6 +280,81 @@ class EvaluationDecision(Model):
     assessment: FireStatus
     risk: RiskLevel
     human_review: bool
+
+
+class HumanAssessment(Model):
+    """An entered human judgment; distinct from approval and synthetic labels."""
+    assessment_id: str = Field(default_factory=lambda: str(uuid4()))
+    run_id: str = Field(min_length=1)
+    reviewer: str = Field(min_length=1, max_length=200)
+    rationale: str = Field(min_length=1, max_length=3000)
+    decision: EvaluationDecision
+    system_output_seen: bool = Field(strict=True)
+    recorded_at: datetime = Field(default_factory=now)
+
+    _aware = field_validator("recorded_at")(Evidence.timezone_required.__func__)
+    _nonblank = field_validator("reviewer", "rationale")(HumanReview.nonblank.__func__)
+
+
+class ShadowValues(Model):
+    # None / unknown is an explicit observation when entered, not an absent update.
+    smoke: Observation = "unknown"
+    flames: Observation = "unknown"
+    exposure: Observation = "unknown"
+    humidity_pct: float | None = Field(default=None, ge=0, le=100)
+    wind_kmh: float | None = Field(default=None, ge=0, le=500)
+    temperature_c: float | None = Field(default=None, ge=-100, le=100)
+    vegetation: Literal["dry", "not_dry", "unknown"] = "unknown"
+    context: FireContext = Field(default_factory=FireContext)
+
+
+class ShadowRecord(Model):
+    evidence: Evidence
+    available_at: datetime | None = None
+    values: ShadowValues
+    _aware = field_validator("available_at")(lambda v: Evidence.timezone_required(v) if v is not None else None)
+
+
+class ShadowDataset(Model):
+    dataset_id: str = Field(default_factory=lambda: str(uuid4()))
+    location: str = Field(min_length=1, max_length=200)
+    environment: Literal["vegetation", "urban_interface"] = "urban_interface"
+    records: list[ShadowRecord] = Field(min_length=1, max_length=50)
+
+    @model_validator(mode="after")
+    def unique_records(self):
+        if len({r.evidence.id for r in self.records}) != len(self.records):
+            raise ValueError("Shadow evidence IDs must be unique")
+        return self
+
+
+class ShadowAudit(Model):
+    dataset_id: str
+    cutoff: datetime
+    included_ids: list[str]
+    excluded: dict[str, list[str]]
+    field_evidence_ids: dict[str, list[str]]
+    conflicting_fields: list[str]
+    policy: str = "Require observed_at and declared available_at <= cutoff. Latest observation per explicitly supplied field; ties with different values become unknown. No post-cutoff text reaches analysis. Availability declarations are not independently verified."
+    _aware = field_validator("cutoff")(Evidence.timezone_required.__func__)
+
+
+class ShadowAnalysis(Model):
+    shadow_id: str = Field(default_factory=lambda: str(uuid4()))
+    executed_at: datetime = Field(default_factory=now)
+    audit: ShadowAudit
+    result: RunResult
+
+    @model_validator(mode="after")
+    def audit_matches_run(self):
+        ids = {record.id for record in self.result.incident.evidence}
+        if self.result.mode != "deterministic" or self.result.llm_calls:
+            raise ValueError("Shadow analysis must be offline and deterministic")
+        if self.result.created_at != self.audit.cutoff:
+            raise ValueError("Shadow cutoff must match the run's analysis time")
+        if ids != set(self.audit.included_ids) or ids.intersection(self.audit.excluded):
+            raise ValueError("Shadow evidence must match the included audit IDs")
+        return self
 
 
 class EvaluationTrial(Model):

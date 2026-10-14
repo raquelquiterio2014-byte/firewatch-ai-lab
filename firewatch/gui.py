@@ -10,7 +10,9 @@ from tkinter.scrolledtext import ScrolledText
 from .evaluation import evaluate, evaluation_csv
 from .gateway import configured_model, configuration_status
 from .integration import check_gemini
-from .models import Evidence, HumanReview, Incident, SharedState
+from .models import (Evidence, EvaluationDecision, FireContext, HumanAssessment,
+                     HumanReview, Incident, SharedState, ShadowDataset)
+from .research import human_comparison, human_comparison_csv, run_shadow
 from .pipeline import Pipeline
 from .presentation import agent_summary
 from .scenarios import SCENARIOS, get_scenario
@@ -29,8 +31,11 @@ class FireWatchApp:
         self.live_steps = []
         self.messages = queue.Queue()
         self.fields = {}
+        self.context_fields = {}
+        self.shadow_dataset = None
+        self.shadow_analysis = None
         self.gemini_model = tk.StringVar(value=configured_model())
-        root.title("FireWatch AI — V4 | Audited Gemini Integration")
+        root.title("FireWatch AI — V5 | Context & Retrospective Analysis")
         root.geometry("1120x760")
         root.minsize(760, 560)
         root.configure(bg="#101d30")
@@ -39,14 +44,14 @@ class FireWatchApp:
         style.configure("TFrame", background="#edf1f5")
         style.configure("TLabel", background="#edf1f5", foreground="#182c43", font=("Segoe UI", 10))
         style.configure("TButton", font=("Segoe UI", 10), padding=(12, 7))
-        style.configure("TNotebook.Tab", padding=(9, 8), font=("Segoe UI", 9))
+        style.configure("TNotebook.Tab", padding=(6, 8), font=("Segoe UI", 9))
         style.configure("Title.TLabel", font=("Segoe UI", 22, "bold"), foreground="#ffffff", background="#101d30")
         style.configure("Hero.TLabel", foreground="#c3d1df", background="#101d30")
         style.configure("Card.TLabel", font=("Segoe UI", 11, "bold"), background="#ffffff")
         header = tk.Frame(root, bg="#101d30", padx=20, pady=14)
         header.pack(fill="x")
         ttk.Label(header, text="FIREWATCH AI", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(header, text="V4 • Audited Gemini • Persistent review requests • Deterministic fallback", style="Hero.TLabel").pack(anchor="w")
+        ttk.Label(header, text="V5 • Evidence-linked context • Recorded human judgments • Shadow Mode", style="Hero.TLabel").pack(anchor="w")
         tk.Label(header, text="EDUCATIONAL PROTOTYPE  |  Synthetic examples  |  No independent fire diagnosis",
                  bg="#101d30", fg="#ffcb77", font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 0))
         cards = tk.Frame(root, bg="#edf1f5", padx=15, pady=10)
@@ -65,12 +70,15 @@ class FireWatchApp:
         self.tabs.add(self.incident_tab, text="Incident")
         self.build_form()
         self.outputs = {}
-        for name in ("Multi-Agent Analysis", "Workflow", "Evidence", "Safety & Human Gate", "Explainable Report", "Agent Trace", "Shared State", "Evaluation", "LLM"):
+        for name in ("Multi-Agent Analysis", "Workflow", "Evidence", "Safety & Human Gate", "Explainable Report", "Agent Trace", "Shared State", "Evaluation", "LLM", "V5"):
             tab = ttk.Frame(self.tabs)
             short_labels = {"Multi-Agent Analysis": "Agents",
                             "Explainable Report": "Report", "Agent Trace": "Trace", "Shared State": "State",
                             "Evaluation": "Eval", "Safety & Human Gate": "Review"}
             self.tabs.add(tab, text=short_labels.get(name, name))
+            if name == "V5":
+                self.build_v5_panel(tab)
+                continue
             if name == "Workflow":
                 self.build_workflow_canvas(tab)
             if name == "Safety & Human Gate":
@@ -100,12 +108,149 @@ class FireWatchApp:
         self.show_llm_status()
         for var in self.fields.values():
             var.trace_add("write", lambda *_: self.input_changed())
+        for var in self.context_fields.values():
+            var.trace_add("write", lambda *_: self.input_changed())
         self.conflict.trace_add("write", lambda *_: self.input_changed())
         self.llm.trace_add("write", lambda *_: self.input_changed())
         self.gemini_model.trace_add("write", lambda *_: self.input_changed())
         self.description.bind("<<Modified>>", self.description_changed)
         self.description.edit_modified(False)
         root.after(100, self.poll)
+
+    def build_v5_panel(self, tab):
+        book = ttk.Notebook(tab)
+        book.pack(fill="both", expand=True, padx=6, pady=6)
+        for name in ("Context", "Human comparison", "Shadow"):
+            panel = ttk.Frame(book)
+            book.add(panel, text=name)
+            if name == "Human comparison":
+                bar = ttk.Frame(panel)
+                bar.pack(fill="x", padx=8, pady=5)
+                self.human_fields = {}
+                definitions = [("reviewer", None), ("assessment", ["NO_INDICATION", "POSSIBLE_FIRE", "STRONG_INDICATION", "INSUFFICIENT_EVIDENCE"]),
+                               ("risk", ["LOW", "MEDIUM", "HIGH", "UNDETERMINED"]), ("human_review", ["REQUIRED", "OPTIONAL"])]
+                for row, (key, choices) in enumerate(definitions):
+                    ttk.Label(bar, text=key.replace("_", " ").title()).grid(row=row, column=0, sticky="w", padx=4, pady=2)
+                    var = tk.StringVar(value="")
+                    self.human_fields[key] = var
+                    widget = ttk.Combobox(bar, textvariable=var, values=choices, state="readonly") if choices else ttk.Entry(bar, textvariable=var)
+                    widget.grid(row=row, column=1, sticky="ew", padx=4, pady=2)
+                bar.columnconfigure(1, weight=1)
+                self.human_rationale = tk.StringVar()
+                ttk.Label(bar, text="Rationale").grid(row=4, column=0, padx=4)
+                ttk.Entry(bar, textvariable=self.human_rationale).grid(row=4, column=1, sticky="ew", padx=4)
+                ttk.Button(bar, text="Record human judgment", command=self.save_human_assessment).grid(row=5, column=1, sticky="w", pady=4)
+                exports = ttk.Frame(panel)
+                exports.pack(fill="x", padx=8)
+                ttk.Button(exports, text="Export comparison JSON", command=self.export_human_comparison).pack(side="left")
+                ttk.Button(exports, text="Export CSV", command=lambda: self.export_human_comparison(csv=True)).pack(side="left", padx=6)
+                ttk.Label(panel, text="Enter your own judgment for the selected run. GUI entries are marked system_output_seen = true; this is not a blinded human baseline. Approval and synthetic labels remain separate.", wraplength=900).pack(anchor="w", padx=8, pady=5)
+            elif name == "Shadow":
+                bar = ttk.Frame(panel)
+                bar.pack(fill="x", padx=8, pady=5)
+                ttk.Button(bar, text="Load dataset JSON", command=self.load_shadow_dataset).pack(side="left")
+                ttk.Button(bar, text="Load synthetic demo", command=self.load_shadow_demo).pack(side="left", padx=4)
+                self.shadow_dataset_note = tk.StringVar(value="No dataset loaded.")
+                ttk.Label(panel, textvariable=self.shadow_dataset_note, wraplength=900).pack(anchor="w", padx=8)
+                cutoff_bar = ttk.Frame(panel)
+                cutoff_bar.pack(fill="x", padx=8, pady=5)
+                self.shadow_cutoff = tk.StringVar(value="2026-10-14T12:00:00Z")
+                ttk.Label(cutoff_bar, text="Cutoff (ISO with timezone)").pack(side="left")
+                ttk.Entry(cutoff_bar, textvariable=self.shadow_cutoff, width=30).pack(side="left", padx=4)
+                self.shadow_button = ttk.Button(cutoff_bar, text="Run Shadow (offline)", command=self.analyze_shadow)
+                self.shadow_button.pack(side="left")
+                export_bar = ttk.Frame(panel)
+                export_bar.pack(fill="x", padx=8)
+                ttk.Button(export_bar, text="Export shadow JSON", command=self.export_shadow).pack(side="left")
+                ttk.Button(export_bar, text="Export TXT", command=lambda: self.export_shadow(txt=True)).pack(side="left", padx=4)
+                self.shadow_history_var = tk.StringVar()
+                self.shadow_history = ttk.Combobox(panel, textvariable=self.shadow_history_var, state="readonly")
+                self.shadow_history.pack(fill="x", padx=8, pady=5)
+                ttk.Button(panel, text="Load saved shadow", command=self.load_saved_shadow).pack(anchor="w", padx=8)
+                ttk.Label(panel, text="Only records observed AND available by the cutoff are analyzed. Unknown availability is excluded. No eligible records = no run. Saved results stay linked to their own cutoff even if the input changes.", wraplength=900).pack(anchor="w", padx=8, pady=4)
+            else:
+                ttk.Label(panel, text="Descriptive context linked to evidence. No spread forecast. Unlinked context, exposure inconsistencies and restricted access with indicators add human-review reasons.", wraplength=900).pack(anchor="w", padx=8, pady=6)
+            output = ScrolledText(panel, wrap="word", font=("Consolas", 10), height=7)
+            output.pack(fill="both", expand=True, padx=8, pady=6)
+            output.configure(state="disabled")
+            self.outputs[name] = output
+
+    def show_human_comparison(self):
+        if self.current:
+            data = human_comparison(self.current, self.store.human_assessments(self.current.run_id))
+            self.set_output("Human comparison", json.dumps(data, indent=2, ensure_ascii=False))
+
+    def save_human_assessment(self):
+        if not self.current or self.busy:
+            messagebox.showinfo("Human comparison", "Analyze or load a saved run first.")
+            return
+        try:
+            values = {key: var.get().strip() for key, var in self.human_fields.items()}
+            if values["human_review"] not in ("REQUIRED", "OPTIONAL"):
+                raise ValueError("Select the human-review judgment explicitly")
+            assessment = HumanAssessment(run_id=self.current.run_id, reviewer=values["reviewer"],
+                                         rationale=self.human_rationale.get(), system_output_seen=True,
+                                         decision=EvaluationDecision(assessment=values["assessment"], risk=values["risk"],
+                                                                     human_review=values["human_review"] == "REQUIRED"))
+            self.store.save_human_assessment(assessment)
+            self.show_human_comparison()
+            self.status.set("Human judgment recorded separately; the original Safety Gate remains unchanged.")
+        except (ValueError, OSError) as exc:
+            messagebox.showerror("Human judgment not saved", str(exc))
+
+    def export_human_comparison(self, csv=False):
+        if self.current:
+            data = human_comparison(self.current, self.store.human_assessments(self.current.run_id))
+            self.write_export(human_comparison_csv(data) if csv else json.dumps(data, indent=2, ensure_ascii=False), ".csv" if csv else ".json")
+
+    def load_shadow_dataset(self):
+        if self.busy:
+            return
+        filename = filedialog.askopenfilename(filetypes=[("Shadow dataset JSON", "*.json")])
+        if filename:
+            try:
+                dataset = ShadowDataset.model_validate_json(Path(filename).read_text(encoding="utf-8-sig"))
+                self.shadow_dataset = dataset
+                self.shadow_dataset_note.set(f"Loaded dataset {dataset.dataset_id}: {len(dataset.records)} records. Availability is declared, not verified.")
+            except (ValueError, OSError) as exc:
+                messagebox.showerror("Invalid shadow dataset", str(exc))
+
+    def load_shadow_demo(self):
+        if self.busy:
+            return
+        from .v5_demo import shadow_demo
+        self.shadow_dataset = shadow_demo()
+        self.shadow_cutoff.set("2026-10-14T12:00:00Z")
+        self.shadow_dataset_note.set("Synthetic demo loaded: 4 records, two excluded at the default cutoff. No real incident.")
+
+    def analyze_shadow(self):
+        if self.busy:
+            return
+        try:
+            if self.shadow_dataset is None:
+                raise ValueError("Load a dataset or the synthetic demo first")
+            cutoff = datetime.fromisoformat(self.shadow_cutoff.get().strip().replace("Z", "+00:00"))
+            if cutoff.tzinfo is None or cutoff.utcoffset() is None:
+                raise ValueError("Cutoff must include a timezone")
+            dataset = self.shadow_dataset
+        except ValueError as exc:
+            messagebox.showerror("Shadow input", str(exc))
+            return
+        self.start_job("shadow", lambda: run_shadow(dataset, cutoff, store=self.store))
+
+    def show_shadow(self, analysis):
+        self.shadow_analysis = analysis
+        self.set_output("Shadow", analysis.model_dump_json(indent=2))
+
+    def load_saved_shadow(self):
+        shadow_id = self.shadow_history_map.get(self.shadow_history_var.get())
+        if shadow_id and not self.busy:
+            self.show_shadow(self.store.load_shadow(shadow_id))
+            self.status.set("Saved shadow restored; its audit shows the cutoff used for that result.")
+
+    def export_shadow(self, txt=False):
+        if self.shadow_analysis:
+            self.write_export(self.shadow_analysis.result.report if txt else self.shadow_analysis.model_dump_json(indent=2), ".txt" if txt else ".json")
 
     def build_llm_panel(self, tab):
         bar = ttk.Frame(tab)
@@ -318,6 +463,7 @@ class FireWatchApp:
 
     def form_fingerprint(self):
         return (tuple((key, var.get()) for key, var in self.fields.items()),
+                tuple((key, var.get()) for key, var in self.context_fields.items()),
                 self.conflict.get(), self.description.get("1.0", "end").strip(),
                 self.llm.get(), self.gemini_model.get())
 
@@ -337,7 +483,7 @@ class FireWatchApp:
         if not self.busy:
             self.status.set("Input changed — analyze again. Previous results remain saved in history.")
             for name in self.outputs:
-                if name not in ("Evaluation", "LLM"):
+                if name not in ("Evaluation", "LLM", "Shadow"):
                     self.set_output(name, "Input changed. Run Analyze Incident or load a saved run.")
             for box in self.flow_boxes.values():
                 self.flow_canvas.itemconfigure(box, fill="white")
@@ -408,6 +554,27 @@ class FireWatchApp:
         self.history = ttk.Combobox(history_bar, textvariable=self.history_var, state="readonly", width=66)
         self.history.pack(side="left", fill="x", expand=True)
         ttk.Button(history_bar, text="Load saved run", command=self.load_history).pack(side="left", padx=8)
+        context_box = ttk.LabelFrame(form, text="V5 — declared context (optional; linked to this evidence record)")
+        context_box.grid(row=18, column=0, columnspan=2, sticky="ew", padx=6, pady=10)
+        context_box.columnconfigure(1, weight=1)
+        definitions = [
+            ("fuel_type", "Fuel type", ["grass", "shrub", "forest", "mixed", "unknown"]),
+            ("vegetation_density", "Vegetation density", ["sparse", "moderate", "dense", "unknown"]),
+            ("slope_deg", "Slope (degrees; blank = unknown)", None),
+            ("wind_direction", "Wind direction", ["N", "NE", "E", "SE", "S", "SW", "W", "NW", "unknown"]),
+            ("gust_kmh", "Wind gust (km/h; blank = unknown)", None),
+            ("distance_to_people_m", "Distance to people (m; blank = unknown)", None),
+            ("distance_to_infrastructure_m", "Distance to infrastructure (m; blank = unknown)", None),
+            ("people_present", "People reported present", ["yes", "no", "unknown"]),
+            ("critical_infrastructure", "Critical infrastructure reported present", ["yes", "no", "unknown"]),
+            ("access_status", "Reported access", ["open", "limited", "blocked", "unknown"]),
+        ]
+        for row, (key, label, choices) in enumerate(definitions):
+            ttk.Label(context_box, text=label).grid(row=row, column=0, sticky="w", padx=6, pady=3)
+            var = tk.StringVar()
+            self.context_fields[key] = var
+            widget = ttk.Combobox(context_box, textvariable=var, values=choices, state="readonly") if choices else ttk.Entry(context_box, textvariable=var)
+            widget.grid(row=row, column=1, sticky="ew", padx=6, pady=3)
 
     def build_review(self, tab):
         bar = ttk.Frame(tab)
@@ -432,6 +599,9 @@ class FireWatchApp:
             if key == "observed_at":
                 value = record.observed_at.isoformat()
             var.set("" if value is None else str(value))
+        for key, var in self.context_fields.items():
+            value = getattr(incident.context, key)
+            var.set("" if value is None else str(value))
         self.conflict.set(record.conflicts)
         self.description.delete("1.0", "end")
         self.description.insert("1.0", incident.description)
@@ -454,7 +624,12 @@ class FireWatchApp:
         record = Evidence(source=values.pop("source"), method=values.pop("method"), provenance=values.pop("provenance"),
                           observed_at=datetime.fromisoformat(values.pop("observed_at")),
                           content=description or "Normalized observation fields entered manually.", conflicts=self.conflict.get())
-        return Incident(**values, description=description, evidence=[record])
+        contextual = {key: var.get().strip() for key, var in self.context_fields.items()}
+        for key in ("slope_deg", "gust_kmh", "distance_to_people_m", "distance_to_infrastructure_m"):
+            contextual[key] = float(contextual[key]) if contextual[key] else None
+        context = FireContext(**contextual)
+        linked = [record.id] if any(v not in (None, "unknown") for v in context.model_dump().values()) else []
+        return Incident(**values, description=description, evidence=[record], context=context, context_evidence_ids=linked)
 
     def start_job(self, kind, fn):
         if self.busy:
@@ -463,8 +638,10 @@ class FireWatchApp:
         self.run_button.configure(state="disabled")
         self.eval_button.configure(state="disabled")
         self.provider_button.configure(state="disabled")
+        self.shadow_button.configure(state="disabled")
         self.status.set("Running synthetic pilot — 10 cases, two deterministic trials each."
-                        if kind == "evaluation" else "Analyzing incident — interface remains available.")
+                        if kind == "evaluation" else "Running offline Shadow Mode at the selected cutoff."
+                        if kind == "shadow" else "Analyzing incident — interface remains available.")
         def work():
             try:
                 self.messages.put((kind, fn(), None))
@@ -510,6 +687,7 @@ class FireWatchApp:
                 self.run_button.configure(state="normal")
                 self.eval_button.configure(state="normal")
                 self.provider_button.configure(state="normal")
+                self.shadow_button.configure(state="normal")
                 if error:
                     self.status.set(error)
                     messagebox.showerror("Operation failed", error)
@@ -524,6 +702,9 @@ class FireWatchApp:
                     self.show_llm_status()
                     self.status.set("Gemini JSON probe succeeded; fire-analysis validation is separate."
                                     if value.succeeded else f"Gemini JSON probe failed: {value.error_code}.")
+                elif kind == "shadow":
+                    self.show_shadow(value)
+                    self.status.set(f"Shadow analysis saved: {value.shadow_id}; cutoff {value.audit.cutoff.isoformat()}.")
                 else:
                     self.show_evaluation(value)
                     self.status.set("Pilot complete: 10 synthetic cases, 20 saved runs and persisted comparison metrics.")
@@ -541,6 +722,10 @@ class FireWatchApp:
 
     def display(self, result):
         self.current = result
+        # Do not carry a previous run's entered judgment into another run.
+        for key in ("assessment", "risk", "human_review"):
+            self.human_fields[key].set("")
+        self.human_rationale.set("")
         self.card_vars["Assessment"].set(result.assessment.status)
         self.card_vars["Priority"].set(result.risk.level)
         self.card_vars["Human review"].set("REQUIRED" if result.safety.human_review_required else "OPTIONAL")
@@ -556,6 +741,8 @@ class FireWatchApp:
         self.refresh_flow(result.graph_steps)
         self.update_review_output()
         self.show_llm_status()
+        self.set_output("Context", result.context_result.model_dump_json(indent=2) if result.context_result else "Context was not recorded by this older version.")
+        self.show_human_comparison()
 
     def update_review_output(self):
         if not self.current:
@@ -588,6 +775,10 @@ class FireWatchApp:
         self.eval_history.configure(values=list(self.eval_history_map))
         if self.eval_history_map:
             self.eval_history_var.set(next(iter(self.eval_history_map)))
+        self.shadow_history_map = {f"{at} | {shadow_id}": shadow_id for shadow_id, at in self.store.shadows()}
+        self.shadow_history.configure(values=list(self.shadow_history_map))
+        if self.shadow_history_map:
+            self.shadow_history_var.set(next(iter(self.shadow_history_map)))
 
     def load_history(self):
         run_id = self.history_map.get(self.history_var.get())

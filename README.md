@@ -1,4 +1,4 @@
-# FireWatch AI — V4
+# FireWatch AI — V5
 
 **Educational multi-agent prototype for fire-indicator analysis, evidence traceability and human review.**
 
@@ -10,7 +10,21 @@ FireWatch evaluates **supplied observations** about vegetation and the urban–v
 
 **All four versions (V1, V2, V3 and V4) were tested and validated by Raquel Cruz on Windows, using Windows PowerShell and Python 3.12.10, on 14 October 2026.** This refers to the recorded basic acceptance sequence: automated suites and the interface, workflow, review, export and persistence checks described in the [validation record](docs/VALIDATION.md). V4 also includes a successful live Gemini integration run for synthetic scenario 03.
 
-This validation was performed through **PowerShell on Windows**; execution through PyCharm was not part of this session. Validation is limited to the recorded checks and synthetic observations, without a real-world fire accuracy claim. V5 and V6 remain deferred.
+This validation was performed through **PowerShell on Windows**; execution through PyCharm was not part of this session. Validation is limited to the recorded checks and synthetic observations, without a real-world fire accuracy claim. **V5 is now implemented; its Windows acceptance and live-provider checks are pending. V6 remains planned.**
+
+## V5 — Context, Human Comparison and Shadow Mode
+
+Package version: **5.0.0**. The V5 tab contains **Context**, **Human comparison** and **Shadow**. It adds:
+
+- Ten optional evidence-linked variables: fuel type, vegetation density, slope, wind direction, gust speed, distances to people and infrastructure, people present, critical infrastructure and access status. Existing humidity, wind, temperature and vegetation inputs remain available. These are declared observations, not a propagation model.
+- A deterministic Context component, executed within the Evidence node, with actual trace events, graph snapshots and report output. Unlinked entered context, inconsistent exposure declarations, and restricted access with fire indicators add mandatory review reasons. Core fire/priority rules and the ten reference labels remain unchanged.
+- Explicit human judgments of assessment, priority and review requirement, stored separately from approval/rejection, checklist outputs and synthetic labels. The comparison uses the latest entry per reviewer for the selected run, preserves disagreement and exports linked JSON/CSV. **No entry means NOT_RECORDED**, not an invented human baseline. GUI entries are disclosed as output-seen, so they are not a blinded baseline.
+- Offline retrospective **Shadow Mode**, importing normalized, timestamped records. Both observation time and declared availability time must be at or before the cutoff. Unknown availability and later records are excluded. Latest explicit values are selected per field; conflicting values tied at the latest observation time become unknown and require review. No eligible records means no run. Excluded free text never reaches analysis.
+- SQLite history for shadow results, cutoff audits, field-to-evidence links and recorded human judgments. A fixed synthetic dataset is available in the interface and [examples/v5-shadow-synthetic.json](examples/v5-shadow-synthetic.json).
+
+Development verification: **92 automated tests passed**, the deterministic pilot remains **10/10** with **7/10** checklist agreement and **10/10** repeatability, and the synthetic cutoff demo was executed. These are development results, not V5 Windows or field acceptance. Follow [V5 Windows/PowerShell checks](docs/V5_WINDOWS.md).
+
+V6 will follow later. An independent **FireWatch AI — Real Cases** project is planned after V5/V6, following the retrospective dossier approach of ResilientCity AI — Real Cases. V5 introduces the offline research mechanism using synthetic demonstrations; no real-fire catalogue has been added.
 
 ## V4 — Audited Gemini Integration
 
@@ -88,6 +102,7 @@ First use the **LLM** tab and **Test Gemini JSON** with a configured key, then s
 | State | Intermediate graph snapshots during execution; validated final outputs and human reviews afterward |
 | Eval | Saved pilot dashboard, baseline comparison, repeated trials, per-case inspection and JSON/CSV export |
 | LLM | Requested model, key-configured status, provider JSON probe and per-call audit |
+| V5 | Context output, entered human judgments/comparison and offline Shadow Mode with saved cutoff history |
 
 The GUI accepts one evidence record per new manual analysis. The backend supports multiple evidence records. Normalized form fields drive the reference rules: free text is **not automatically extracted**. Conflict flags and provenance are entered declarations, not independent verification.
 
@@ -115,7 +130,7 @@ Validation status and limitations: [docs/VALIDATION.md](docs/VALIDATION.md). Arc
 
 **Recorded Windows validation, 14 October 2026:** V1/V2/V3/V4 suites passed 25/35/43/63 tests respectively. The subsequent V4 request-contract fix passes **64 tests** and [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38647508384). Separately, the exported live Gemini run confirms validated Planner, Decision and Critic calls, STRONG_INDICATION / HIGH / REQUIRED, retained review requests, and reload after restart. See [the acceptance record and JSON/TXT/CSV evidence](docs/evidence/windows-2026-10-14/README.md). This is a limited synthetic acceptance sequence, not full visual acceptance across resolutions or field validation.
 
-Pilot metrics measure agreement with authored synthetic labels and consistency of identifiers/decisions. The baseline is simplified executable code, not measured human judgment. Human review time, field reliability and calibrated confidence are not measured.
+Pilot metrics measure agreement with authored synthetic labels and consistency of identifiers/decisions. The pilot's checklist is simplified executable code, not measured human judgment. V5 human judgments are recorded separately and do not rewrite pilot metrics. Human review time, field reliability and calibrated confidence are not measured.
 
 ## Rule interpretation
 

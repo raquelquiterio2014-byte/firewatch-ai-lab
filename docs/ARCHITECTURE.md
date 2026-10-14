@@ -1,4 +1,4 @@
-# FireWatch AI — V4 Architecture
+# FireWatch AI — V5 Architecture
 
 ## Dependent state and real branches
 
@@ -30,7 +30,21 @@ In deterministic mode, nodes use educational rules. In hybrid mode, Planner, Dec
 
 The deterministic Critic checks classification, contextual priority, citations and review requirements before the optional LLM Critic. Rejected proposals remain visibly unapproved after the limit. Reference assessment and contextual priority are retained; Safety Gate cannot be overridden by a proposal or later human-review record.
 
-The gateway retains environment-only credentials, at most two attempts per call, timeout, structured validation and explicit fallback. The default mode does not call an external API. Live Gemini compatibility has not been verified; provider parsing and agent behavior are tested with offline doubles.
+The gateway retains environment-only credentials, at most two attempts per call, timeout, structured validation and explicit fallback. The default mode does not call an external API. V4 has recorded live Gemini evidence for one synthetic scenario; V5-specific live acceptance remains pending. Automated provider parsing and agent behavior are tested with offline doubles.
+
+## V5 context, human judgments and retrospective projection
+
+`FireContext` adds optional normalized context and `Incident.context_evidence_ids` links it to supplied records. The Context component executes inside the graph's Evidence node and emits actual trace events. Its `ContextResult` is consumed by Decision and the deterministic Safety Gate, exported in the report and retained in graph/final state. It does not modify the core assessment or priority rules. Unknown optional context alone does not add escalation; entered unlinked context, exposure inconsistencies and restricted access alongside fire indicators do.
+
+`HumanAssessment` is separate from `HumanReview` and `PilotEvaluation`. It requires explicit assessment/priority/review judgments, reviewer, rationale and an output-seen flag. SQLite retains append-only assessment entries. Comparisons select the latest entry per reviewer for one saved run, with entry/reviewer counts rather than a claim of independent scenario accuracy. GUI entries are always output-seen. Approval does not supply a baseline judgment and neither record alters the saved Safety Gate.
+
+`ShadowDataset` contains manually normalized partial field updates with evidence observation times and declared availability times. Projection requires both times <= cutoff; missing availability and later observations are excluded. It applies the latest observation time per explicitly supplied field. An explicit unknown overwrites an earlier known value; omitted fields do not. Different values tied at the latest observation time become unknown and flag conflicts. Core and context values retain field-to-evidence links. The input location/environment are static dataset metadata, not time-varying observations.
+
+Only eligible evidence content and projected values enter a deterministic Pipeline at the cutoff time. No provider is invoked. The exclusion audit contains IDs/reasons, never the excluded content or normalized values. No eligible records means analysis is blocked. `ShadowAnalysis.executed_at` records the actual execution time; its run `created_at` is the historical analysis cutoff. A ShadowPolicy trace event records filtering and its field links. The cutoff is a retrospective analysis reference, not a claim that the software ran at that historical time.
+
+Shadow run and audit snapshots are saved together in one SQLite transaction; JSONL is appended afterward. Immutable shadow history and separate JSON/TXT exports remain available after restart. `ShadowAnalysis` checks that mode is deterministic, cutoff matches analysis time, and run evidence IDs match the inclusion audit. Existing V1–V4 snapshots load with empty/default context fields and no old snapshot is rewritten.
+
+This implementation prepares a research workflow with synthetic demonstrations. Source availability declarations are not authenticated, and no real-case dossiers, sensor stream or operational decision system have been added.
 
 ## Evidence quality
 

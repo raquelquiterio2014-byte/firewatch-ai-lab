@@ -1,4 +1,4 @@
-# Validation record — FireWatch AI V1–V4
+# Validation record — FireWatch AI V1–V5
 
 Updated 14 October 2026. [Windows acceptance evidence and exports](evidence/windows-2026-10-14/README.md) record the tests performed by Raquel Cruz and the files checked during the session. The GUI was executed on her Windows computer; automated development/CI tests use offline provider doubles.
 
@@ -40,6 +40,14 @@ An initial HTTP_400 was diagnosed locally as **invalid API key**. The gateway re
 
 These checks establish a basic acceptance sequence on one Windows setup and one live Gemini synthetic scenario. They do not establish full layout acceptance across resolutions, execution from PyCharm, live Gemini agreement across all ten cases, adversarial live revision behavior, authenticated source truth, calibrated confidence or real-fire accuracy. The V4 deterministic pilot result was not separately supplied in this acceptance record; earlier V3 exports and automated CI evaluation remain distinct evidence.
 
-The synthetic labels follow educational reference rules. Source/provenance and conflict flags are declarations. No real incidents, measured sensors, propagation forecasts or emergency actions were tested. V5/V6 remain deferred.
+The synthetic labels follow educational reference rules. Source/provenance and conflict flags are declarations. No real incidents, measured sensors, propagation forecasts or emergency actions were tested. V6 and the independent real-cases project remain planned.
+
+## V5 development verification — separate from Windows acceptance
+
+The V5 implementation was checked in the development environment with Python 3.12: **92 automated tests passed**. These include the 64 prior regressions and 28 new tests for evidence-linked context, required review, legacy loading, explicit human judgments, disagreement/denominators, independent approval records, export links, cutoff filtering, unknown availability, partial updates, conflicting latest values, audit integrity and restart persistence. Provider transports remain mocked; Shadow Mode was verified offline.
+
+The deterministic pilot retained system **10/10**, checklist **7/10** and repeatability **10/10**. The four-record synthetic shadow fixture was executed at UTC 12:00 and 13:00: the late report is excluded first and included later, changing NO_INDICATION / LOW / OPTIONAL to STRONG_INDICATION / HIGH / REQUIRED. The JSON fixture was imported separately. These demonstrations are project-rule consistency checks, not real-fire accuracy.
+
+**V5 manual Windows acceptance by Raquel Cruz and V5 live Gemini validation are pending.** No actual human baseline dataset has been recorded during development; human assessment unit tests use explicitly identified fixtures. GUI-entered human judgments are marked output-seen. GitHub Actions now includes Windows Python 3.12 automated checks and a GUI construction/interaction smoke check, distinct from manual screen-layout acceptance. Follow [V5_WINDOWS.md](V5_WINDOWS.md) and record local evidence separately.
 
 For reproduction, follow [V4_WINDOWS.md](V4_WINDOWS.md), [V3_WINDOWS.md](V3_WINDOWS.md) and [V2_WINDOWS.md](V2_WINDOWS.md). Keep provider-backed exports separate from mocked automated test results.

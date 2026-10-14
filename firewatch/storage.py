@@ -2,7 +2,7 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-from .models import HumanReview, LLMCallRecord, PilotEvaluation, RunResult
+from .models import HumanAssessment, HumanReview, LLMCallRecord, PilotEvaluation, RunResult, ShadowAnalysis
 
 
 class Store:
@@ -25,6 +25,10 @@ class Store:
                     created_at TEXT NOT NULL, snapshot TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS provider_checks(id TEXT PRIMARY KEY,
                     created_at TEXT NOT NULL, snapshot TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS human_assessments(id TEXT PRIMARY KEY,
+                    run_id TEXT NOT NULL REFERENCES runs(id), snapshot TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS shadow_analyses(id TEXT PRIMARY KEY,
+                    run_id TEXT NOT NULL REFERENCES runs(id), executed_at TEXT NOT NULL, snapshot TEXT NOT NULL);
             """)
 
     @contextmanager
@@ -37,19 +41,61 @@ class Store:
         finally:
             db.close()
 
+    def _save_run(self, db, result):
+        db.execute("INSERT OR REPLACE INTO incidents VALUES (?, ?)",
+                   (result.incident.id, result.incident.model_dump_json()))
+        for record in result.incident.evidence:
+            db.execute("INSERT OR REPLACE INTO evidence VALUES (?, ?, ?)",
+                       (record.id, result.incident.id, record.model_dump_json()))
+        db.execute("INSERT INTO runs VALUES (?, ?, ?, ?)",
+                   (result.run_id, result.incident.id, result.created_at.isoformat(), result.model_dump_json()))
+
     def save(self, result):
         with self.connect() as db:
-            db.execute("INSERT OR REPLACE INTO incidents VALUES (?, ?)",
-                       (result.incident.id, result.incident.model_dump_json()))
-            for record in result.incident.evidence:
-                db.execute("INSERT OR REPLACE INTO evidence VALUES (?, ?, ?)",
-                           (record.id, result.incident.id, record.model_dump_json()))
-            db.execute("INSERT INTO runs VALUES (?, ?, ?, ?)",
-                       (result.run_id, result.incident.id, result.created_at.isoformat(), result.model_dump_json()))
+            self._save_run(db, result)
+        self._append_trace(result)
+
+    def _append_trace(self, result):
         # SQLite's run snapshot is authoritative; JSONL is a convenient trace export.
         with self.trace_path.open("a", encoding="utf-8") as output:
             for event in result.trace:
                 output.write(event.model_dump_json() + "\n")
+
+    def save_human_assessment(self, assessment):
+        assessment = HumanAssessment.model_validate(assessment.model_dump())
+        with self.connect() as db:
+            row = db.execute("SELECT snapshot FROM runs WHERE id=?", (assessment.run_id,)).fetchone()
+            if row is None:
+                raise ValueError("Analyze or load an existing run first")
+            result = RunResult.model_validate_json(row[0])
+            if assessment.recorded_at < result.created_at:
+                raise ValueError("Human assessment cannot precede its saved run")
+            db.execute("INSERT INTO human_assessments VALUES (?, ?, ?)",
+                       (assessment.assessment_id, assessment.run_id, assessment.model_dump_json()))
+
+    def human_assessments(self, run_id):
+        with self.connect() as db:
+            rows = db.execute("SELECT snapshot FROM human_assessments WHERE run_id=? ORDER BY rowid", (run_id,)).fetchall()
+        return [HumanAssessment.model_validate_json(row[0]) for row in rows]
+
+    def save_shadow(self, analysis):
+        analysis = ShadowAnalysis.model_validate(analysis.model_dump())
+        with self.connect() as db:
+            self._save_run(db, analysis.result)
+            db.execute("INSERT INTO shadow_analyses VALUES (?, ?, ?, ?)",
+                       (analysis.shadow_id, analysis.result.run_id, analysis.executed_at.isoformat(), analysis.model_dump_json()))
+        self._append_trace(analysis.result)
+
+    def load_shadow(self, shadow_id):
+        with self.connect() as db:
+            row = db.execute("SELECT snapshot FROM shadow_analyses WHERE id=?", (shadow_id,)).fetchone()
+        if row is None:
+            raise KeyError("Shadow analysis not found")
+        return ShadowAnalysis.model_validate_json(row[0])
+
+    def shadows(self, limit=30):
+        with self.connect() as db:
+            return db.execute("SELECT id, executed_at FROM shadow_analyses ORDER BY executed_at DESC LIMIT ?", (limit,)).fetchall()
 
     def load(self, run_id):
         with self.connect() as db:

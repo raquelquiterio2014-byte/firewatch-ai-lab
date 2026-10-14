@@ -7,9 +7,10 @@ from uuid import uuid4
 from langgraph.graph import END, START, StateGraph
 
 from . import agents
+from .context import context_agent
 from .gateway import GeminiGateway, GatewayError
 from .models import (Assessment, CriticReview, Event, EvidenceQuality, EvidenceResult,
-                     GraphStep, Incident, LLMCallRecord, Plan, Proposal, Risk, RunResult, SafetyResult, now)
+                     ContextResult, GraphStep, Incident, LLMCallRecord, Plan, Proposal, Risk, RunResult, SafetyResult, now)
 from .quality import evidence_quality
 
 
@@ -17,6 +18,7 @@ class WorkflowState(TypedDict, total=False):
     incident: Incident
     evidence: EvidenceResult
     quality: EvidenceQuality
+    context_result: ContextResult
     plan: Plan
     assessment: Assessment
     risk: Risk
@@ -69,11 +71,13 @@ def state_snapshot(state):
                                "smoke": incident.smoke, "flames": incident.flames, "exposure": incident.exposure,
                                "humidity_pct": incident.humidity_pct, "wind_kmh": incident.wind_kmh,
                                "temperature_c": incident.temperature_c, "vegetation": incident.vegetation,
+                               "context": incident.context.model_dump(mode="json"),
+                               "context_evidence_ids": list(incident.context_evidence_ids),
                                "evidence_ids": [e.id for e in incident.evidence]},
                 "revision_count": state["revisions"], "errors": list(state["errors"]),
                 "llm_active": state["llm_active"]}
     snapshot["llm_review_requests"] = list(state.get("review_requests", []))
-    for key in ("evidence", "quality", "plan", "assessment", "risk", "proposal", "critic", "safety"):
+    for key in ("evidence", "quality", "context_result", "plan", "assessment", "risk", "proposal", "critic", "safety"):
         if key in state:
             snapshot[key] = state[key].model_dump(mode="json")
     for key in ("questions", "review_pending"):
@@ -161,7 +165,8 @@ class Pipeline:
         def evidence_node(state):
             checked = reference("Evidence", agents.evidence_agent, state["incident"], at)
             quality = reference("EvidenceQuality", evidence_quality, state["incident"], checked)
-            return {"evidence": checked, "quality": quality}
+            contextual = reference("Context", context_agent, state["incident"])
+            return {"evidence": checked, "quality": quality, "context_result": contextual}
 
         def planner_node(state):
             plan, update = reasoning(state, "Planner", Plan, {"evidence": state["evidence"].model_dump(mode="json")},
@@ -192,6 +197,7 @@ class Pipeline:
 
         def decision_node(state):
             data = context(state)
+            data["context_result"] = state["context_result"].model_dump(mode="json")
             if state["revisions"]:
                 data["critic"] = state["critic"].model_dump(mode="json")
             default = agents.decision_agent(state["assessment"], state["risk"], state["evidence"])
@@ -218,8 +224,9 @@ class Pipeline:
             return {"revisions": state["revisions"] + 1}
 
         def safety_node(state):
+            requests = [*state["review_requests"], *state["context_result"].concerns]
             return {"safety": reference("SafetyGate", agents.safety_gate, state["assessment"], state["risk"],
-                                        state["evidence"], state["proposal"], state["critic"], state["errors"], state["review_requests"])}
+                                        state["evidence"], state["proposal"], state["critic"], state["errors"], requests)}
 
         def reporter_node(state):
             mode = "fallback" if state["errors"] else "llm" if use_llm else "deterministic"
@@ -227,6 +234,7 @@ class Pipeline:
             report = agents.reporter_agent(state["incident"], state["assessment"], state["risk"], state["evidence"],
                                             state["proposal"], state["safety"], mode, run_id)
             report += f"\nEVIDENCE QUALITY\nIndicator completeness: {state['quality'].completeness}\n{state['quality'].note}\n"
+            report += "\nCONTEXT — DESCRIPTIVE / NOT A SPREAD FORECAST\n" + state["context_result"].model_dump_json(indent=2) + "\n"
             report += "\nLLM INTEGRATION AUDIT\n" + "\n".join(
                 f"{call.component}: {call.source}; model={call.requested_model}; attempts={len(call.attempts)}; "
                 f"validated={call.output_validated}; error={call.error_code or 'none'}" for call in call_records)
@@ -260,4 +268,5 @@ class Pipeline:
                          critic=state["critic"], safety=state["safety"], revisions=state["revisions"],
                          errors=state["errors"], trace=trace, report=state["report"], duration_ms=duration,
                          orchestrator="langgraph", evidence_quality=state["quality"], graph_steps=steps,
+                         context_result=state["context_result"],
                          llm_calls=call_records, llm_review_requests=state["review_requests"])
