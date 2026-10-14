@@ -160,7 +160,9 @@ class GatewayTests(unittest.TestCase):
             request = network.call_args.args[0]
             self.assertNotIn("test-key", request.full_url)
             payload = json.loads(request.data)
-            self.assertIn("responseFormat", payload["generationConfig"])
+            self.assertEqual(payload["generationConfig"]["responseMimeType"], "application/json")
+            self.assertIn("human_review", payload["generationConfig"]["responseJsonSchema"]["required"])
+            self.assertNotIn("responseFormat", payload["generationConfig"])
             self.assertEqual(result.tool, "assess_evidence")
 
 

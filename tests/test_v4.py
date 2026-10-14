@@ -27,6 +27,25 @@ class Response:
 
 
 class GatewayV4Tests(unittest.TestCase):
+    def test_generate_content_json_contract_for_probe_and_agents(self):
+        outputs = [
+            ("ConnectionProbe", ConnectionProbe, {"status": "ok"}),
+            ("Planner", Plan, {"tool": "assess_evidence", "rationale": "Test", "human_review": False}),
+        ]
+        for component, schema, output in outputs:
+            with self.subTest(component=component), patch.dict(os.environ, {"GEMINI_API_KEY": "fixture-secret-key"}), \
+                 patch("firewatch.gateway.urlopen", return_value=Response(output)) as network:
+                GeminiGateway().call(component, schema, {})
+                request = network.call_args.args[0]
+                config = json.loads(request.data)["generationConfig"]
+                self.assertTrue(request.full_url.endswith(":generateContent"))
+                self.assertEqual(config["responseMimeType"], "application/json")
+                self.assertNotIn("responseFormat", config)
+                self.assertNotIn("responseSchema", config)
+                self.assertEqual(config["responseJsonSchema"]["type"], "object")
+                required = config["responseJsonSchema"]["required"]
+                self.assertIn("status" if component == "ConnectionProbe" else "human_review", required)
+
     def test_string_review_flag_is_invalid_output(self):
         with patch.dict(os.environ, {"GEMINI_API_KEY": "fixture-secret-key"}), \
              patch("firewatch.gateway.urlopen", return_value=Response({"tool": "assess_evidence", "rationale": "Wrong type", "human_review": "false"})):

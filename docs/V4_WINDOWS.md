@@ -56,6 +56,22 @@ The revision/escalation adversarial cases are tested with controlled doubles. Do
 
 ## CLI probe and hybrid scenario
 
+### JSON request compatibility fix (14 October 2026)
+
+The initial V4 local connection probe returned HTTP_400 despite a configured key.
+The adapter now uses `generationConfig.responseMimeType` and
+`generationConfig.responseJsonSchema` for the `generateContent` endpoint instead
+of the newer `responseFormat` envelope. This targets the Gemini 2.5 REST contract;
+the HTTP status alone does not establish the original provider error's exact cause.
+The corrected request contract is covered by offline tests (64 tests total).
+Live success remains pending a new local probe. A configured key is not proof of
+valid credentials, available quota or model access.
+
+Existing V4 folders can replace only `firewatch/gateway.py` from the corrected
+repository, after closing the app and backing up that file. Dependencies, saved
+runs and key configuration do not change. Relaunch from the same configured
+PowerShell session and click **Test Gemini JSON** once before incident analysis.
+
 After environment configuration:
 
 ```powershell

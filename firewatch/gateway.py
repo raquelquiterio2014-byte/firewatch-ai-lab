@@ -63,7 +63,7 @@ class GeminiGateway:
             "systemInstruction": {"parts": [{"text": instruction}]},
             "contents": [{"role": "user", "parts": [{"text": json.dumps(context, ensure_ascii=False)}]}],
             "generationConfig": {"temperature": 0, "maxOutputTokens": 4096,
-                "responseFormat": {"text": {"mimeType": "application/json", "schema": response_schema}}},
+                "responseMimeType": "application/json", "responseJsonSchema": response_schema},
         }
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
         request = Request(url, data=json.dumps(payload).encode(), method="POST",
