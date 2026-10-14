@@ -6,6 +6,12 @@ Developed by **Raquel Cruz** as an educational project inspired by the evidence,
 
 FireWatch evaluates **supplied observations** about vegetation and the urban–vegetation interface. It distinguishes fire indications, contextual priority and evidence gaps. It does not independently diagnose a fire, forecast propagation, issue operational commands or establish that an area is safe.
 
+## Windows and PowerShell validation — V1, V2, V3 and V4
+
+**All four versions (V1, V2, V3 and V4) were tested and validated by Raquel Cruz on Windows, using Windows PowerShell and Python 3.12.10, on 14 October 2026.** This refers to the recorded basic acceptance sequence: automated suites and the interface, workflow, review, export and persistence checks described in the [validation record](docs/VALIDATION.md). V4 also includes a successful live Gemini integration run for synthetic scenario 03.
+
+This validation was performed through **PowerShell on Windows**; execution through PyCharm was not part of this session. Validation is limited to the recorded checks and synthetic observations, without a real-world fire accuracy claim. V5 and V6 remain deferred.
+
 ## V4 — Audited Gemini Integration
 
 Package version: **4.0.0**. V4 strengthens the optional Gemini workflow with explicit review booleans, retained escalation requests, a provider-only JSON probe and per-call audit records. Planner, Decision and Critic requests for human review survive revisions/rejected proposals and reach the deterministic Safety Gate.

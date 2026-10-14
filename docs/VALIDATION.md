@@ -2,6 +2,8 @@
 
 Updated 14 October 2026. [Windows acceptance evidence and exports](evidence/windows-2026-10-14/README.md) record the tests performed by Raquel Cruz and the files checked during the session. The GUI was executed on her Windows computer; automated development/CI tests use offline provider doubles.
 
+**V1, V2, V3 and V4 were all tested and validated on Windows through Windows PowerShell by Raquel Cruz on 14 October 2026, within the basic acceptance scope documented below.** Python 3.12.10 was used. This session did not validate execution through PyCharm.
+
 ## Automated suites
 
 | Milestone | Windows suite | Observed result |
