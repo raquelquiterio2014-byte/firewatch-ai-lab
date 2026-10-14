@@ -3,7 +3,7 @@ import argparse
 import json
 from pathlib import Path
 
-from firewatch.evaluation import evaluate
+from firewatch.evaluation import evaluate, evaluation_csv
 from firewatch.pipeline import Pipeline
 from firewatch.scenarios import SCENARIOS, get_scenario
 from firewatch.storage import Store
@@ -16,13 +16,20 @@ def main():
     parser.add_argument("--llm", action="store_true", help="Use optional Gemini for a single CLI scenario")
     parser.add_argument("--output", type=Path, help="Write CLI output JSON")
     parser.add_argument("--data-dir", default="data", help="SQLite and trace destination")
+    parser.add_argument("--repetitions", type=int, choices=range(2, 6), default=2, help="Decision-stability trials per evaluation case")
+    parser.add_argument("--csv", type=Path, help="Write per-scenario CSV for --evaluate")
     args = parser.parse_args()
+    if args.csv and not args.evaluate:
+        parser.error("--csv requires --evaluate")
     if args.evaluate or args.scenario:
         store = Store(args.data_dir)
         if args.evaluate:
             if args.llm:
                 parser.error("--evaluate is deterministic; --llm requires --scenario")
-            data = evaluate(store)
+            data = evaluate(store, repetitions=args.repetitions)
+            if args.csv:
+                args.csv.parent.mkdir(parents=True, exist_ok=True)
+                args.csv.write_text(evaluation_csv(data), encoding="utf-8-sig")
             code = 0 if data["passed"] == data["total"] else 1
         else:
             name = list(SCENARIOS)[args.scenario - 1]

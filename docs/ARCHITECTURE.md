@@ -1,4 +1,4 @@
-# FireWatch AI — V2 Architecture
+# FireWatch AI — V3 Architecture
 
 ## Dependent state and real branches
 
@@ -51,3 +51,11 @@ JSONL is an additional export after database commit. If file writing fails, the 
 ## Input/result separation
 
 Editing the form invalidates current cards, report and review controls until another analysis or history load. If edits occur while a job is running, the completed earlier input is saved but not presented as a result for the edited form. Preset selection changes the input; reanalysis is always needed. Existing saved runs remain accessible through history.
+
+## V3 supervised evaluation
+
+`PilotEvaluation`, `EvaluationCase`, `EvaluationTrial` and `EvaluationMetrics` validate the comparison record. The evaluation function creates each synthetic input once and freezes its analysis time for two to five deterministic trials. It compares first-trial outputs with authored labels and a separate executable checklist, then compares repeated decision fields with each other. It does not invoke Gemini.
+
+The protocol saves every trial RunResult and then its completed PilotEvaluation in SQLite. If evaluation is interrupted, completed trial runs may exist without a final pilot record. There is no evaluation resume/checkpointer. Later human reviews are separate records and do not retroactively modify the saved evaluation metrics. The new table is created alongside existing tables, without rewriting V1/V2 run snapshots.
+
+The GUI uses the existing worker/queue pattern for evaluation. Summary cards and per-case rows are derived from stored typed data. CSV exports flattened comparisons and trial run IDs; JSON preserves the full evaluation structure. The Evidence inspector displays declarations and flags without changing the underlying reference rules.

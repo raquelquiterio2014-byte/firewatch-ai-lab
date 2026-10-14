@@ -2,7 +2,7 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-from .models import HumanReview, RunResult
+from .models import HumanReview, PilotEvaluation, RunResult
 
 
 class Store:
@@ -21,6 +21,8 @@ class Store:
                     created_at TEXT NOT NULL, snapshot TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS human_reviews(id INTEGER PRIMARY KEY AUTOINCREMENT,
                     run_id TEXT NOT NULL REFERENCES runs(id), snapshot TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS pilot_evaluations(id TEXT PRIMARY KEY,
+                    created_at TEXT NOT NULL, snapshot TEXT NOT NULL);
             """)
 
     @contextmanager
@@ -68,3 +70,20 @@ class Store:
         with self.connect() as db:
             rows = db.execute("SELECT snapshot FROM human_reviews WHERE run_id=? ORDER BY id", (run_id,)).fetchall()
         return [HumanReview.model_validate_json(row[0]) for row in rows]
+
+    def save_evaluation(self, evaluation):
+        evaluation = PilotEvaluation.model_validate(evaluation.model_dump())
+        with self.connect() as db:
+            db.execute("INSERT INTO pilot_evaluations VALUES (?, ?, ?)",
+                       (evaluation.evaluation_id, evaluation.evaluated_at.isoformat(), evaluation.model_dump_json()))
+
+    def load_evaluation(self, evaluation_id):
+        with self.connect() as db:
+            row = db.execute("SELECT snapshot FROM pilot_evaluations WHERE id=?", (evaluation_id,)).fetchone()
+        if row is None:
+            raise KeyError("Evaluation not found")
+        return PilotEvaluation.model_validate_json(row[0])
+
+    def evaluations(self, limit=10):
+        with self.connect() as db:
+            return db.execute("SELECT id, created_at FROM pilot_evaluations ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()

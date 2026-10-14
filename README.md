@@ -1,4 +1,4 @@
-# FireWatch AI — V2
+# FireWatch AI — V3
 
 **Educational multi-agent prototype for fire-indicator analysis, evidence traceability and human review.**
 
@@ -6,26 +6,29 @@ Developed by **Raquel Cruz** as an educational project inspired by the evidence,
 
 FireWatch evaluates **supplied observations** about vegetation and the urban–vegetation interface. It distinguishes fire indications, contextual priority and evidence gaps. It does not independently diagnose a fire, forecast propagation, issue operational commands or establish that an area is safe.
 
-## V2 — Conditional Workflow and Evidence Quality
+## V3 — Supervised Pilot Evaluation
 
-Package version: **2.0.0**. LangGraph now executes the specialist nodes with conditional Planner routing and a Critic → revision → Decision loop limited to one revision. **Workflow** shows the compiled topology and actually visited nodes; **State** receives intermediate snapshots during analysis and displays the validated final snapshot afterward.
+Package version: **3.0.0**. V3 keeps the LangGraph conditional workflow and adds a persisted evaluation dashboard: ten synthetic cases, two trials per case, an executable simplified checklist baseline, field agreement, missed/extra review counts, citation-ID validity and repeated-decision stability.
 
-**Evidence Quality** describes how many of the three indicator fields are known, plus flagged conflicts, stale/future timestamps and declared provenance. It does not calculate confidence or authenticate a source. Editing the observation clears previously displayed results; the previous run remains in history.
+**Evaluation** presents summary cards, a per-case table, expected/actual fields, saved pilot history and links to each completed analysis. Export the comparison as JSON or CSV. **Evidence** now has a table showing source, method, declared provenance, timestamps and flags; completeness remains descriptive, not confidence.
 
-Windows and PyCharm remain the local validation environment. Start in deterministic mode without a key. Update dependencies before launching V2: `python -m pip install -r requirements.txt` using the project interpreter. Preserve the V1 folder and its `data/` directory before replacing your local version. V1 saved snapshots remain readable by V2.
+The sample catalogue yields system agreement **10/10**, simplified checklist agreement **7/10**, system missed/extra reviews **0/0**, and repeated decisions **10/10**. The authored labels follow the richer system's rules; this is not an independent field-accuracy study or a comparison against observed professional human decisions.
 
-V2 guide: [docs/V2_WINDOWS.md](docs/V2_WINDOWS.md).
+Windows and PyCharm remain the local validation environment. Start without a key. Download the current version into a separate folder and preserve earlier folders/data. Existing run snapshots remain readable; the database adds a table for V3 pilot records.
+
+V3 installation, protocol and metric definitions: [docs/V3_WINDOWS.md](docs/V3_WINDOWS.md).
 
 ## What is implemented
 
 - English Tkinter/ttk desktop interface with scenarios and custom observations.
 - Typed input and output models using Pydantic and a LangGraph workflow state.
-- Ten labelled synthetic scenarios and an evaluation screen.
+- Ten labelled synthetic scenarios with a persisted pilot evaluation dashboard and two deterministic trials per case.
 - Conditional workflow view, streamed state snapshots and descriptive evidence-quality checks.
 - Planner, Evidence, Fire Assessment, Risk/Exposure, Decision, Critic and Reporter components.
 - Deterministic Safety Gate and recorded human approval/rejection.
 - SQLite run snapshots, evidence records, saved-run history and real JSONL trace events.
-- TXT report and JSON run/evaluation export.
+- TXT reports, JSON run/evaluation export and CSV evaluation tables.
+- Executable checklist comparison, per-field agreement, missed/extra review counts and trial-linked history.
 - Optional Gemini adapter with structured outputs, bounded retries and explicit fallback.
 - Windows launcher and a GitHub Actions workflow.
 
@@ -74,12 +77,12 @@ Select **Use Gemini (optional)** in the GUI. Model availability and structured-o
 | Incident | Scenario selector, normalized observations, source/provenance and saved-run history |
 | Agents | Actual component results, selected plan, critic verdict and revision count |
 | Workflow | Compiled node topology, visited route and live completion updates |
-| Evidence | Record IDs plus descriptive completeness, timestamps, provenance and flagged conflicts |
+| Evidence | Source/provenance inspector plus descriptive completeness, timestamps and flagged conflicts |
 | Safety / Review | Mandatory review reasons and reviewer/comment records |
 | Report | Explainable TXT report and JSON export |
 | Trace | Actual events linked to the current run ID |
 | State | Intermediate graph snapshots during execution; validated final outputs and human reviews afterward |
-| Evaluation | Ten deterministic synthetic cases and expected-versus-actual fields |
+| Evaluation | Saved pilot dashboard, baseline comparison, repeated trials, per-case inspection and JSON/CSV export |
 
 The GUI accepts one evidence record per new manual analysis. The backend supports multiple evidence records. Normalized form fields drive the reference rules: free text is **not automatically extracted**. Conflict flags and provenance are entered declarations, not independent verification.
 
@@ -89,7 +92,7 @@ When editing a loaded run, run a new analysis to create a new immutable run snap
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
-.\.venv\Scripts\python.exe main.py --evaluate --output exports\evaluation.json
+.\.venv\Scripts\python.exe main.py --evaluate --repetitions 2 --output exports\evaluation.json --csv exports\evaluation.csv
 .\.venv\Scripts\python.exe main.py --scenario 3 --output exports\flames-case.json
 ```
 
@@ -105,7 +108,9 @@ Automated tests do not establish visual acceptance. Record the observed Windows/
 
 Validation status and limitations: [docs/VALIDATION.md](docs/VALIDATION.md). Architecture and rules: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-V1 passed [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38325068591). V2 has **35 passing local tests** with LangGraph 1.2.15 and Pydantic 2.14.1, including graph branches, bounded revision, streamed-state persistence, compatibility with V1 results, input-edit invalidation and agreement with the V1 reference for all ten scenarios. Remote CI must be checked for the V2 commit separately. These checks do not validate Windows GUI rendering or a live Gemini call.
+V2 passed [GitHub Actions on Python 3.11 and 3.12](https://github.com/raquelquiterio2014-byte/firewatch-ai-lab/actions/runs/38488970214). V3 has **43 passing local tests**, including detection of changing repeated decisions, invalid citation/trace IDs, missed/extra review accounting, persistent trial links and CSV/JSON export. Remote CI must be checked for the V3 commit separately. These checks do not validate Windows GUI rendering or a live Gemini call.
+
+Pilot metrics measure agreement with authored synthetic labels and consistency of identifiers/decisions. The baseline is simplified executable code, not measured human judgment. Human review time, field reliability and calibrated confidence are not measured.
 
 ## Rule interpretation
 

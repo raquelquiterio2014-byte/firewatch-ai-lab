@@ -7,7 +7,7 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 
-from .evaluation import evaluate
+from .evaluation import evaluate, evaluation_csv
 from .models import Evidence, HumanReview, Incident, SharedState
 from .pipeline import Pipeline
 from .presentation import agent_summary
@@ -27,7 +27,7 @@ class FireWatchApp:
         self.live_steps = []
         self.messages = queue.Queue()
         self.fields = {}
-        root.title("FireWatch AI — V2 | Conditional Agent Workflow")
+        root.title("FireWatch AI — V3 | Supervised Pilot Evaluation")
         root.geometry("1120x760")
         root.minsize(760, 560)
         root.configure(bg="#101d30")
@@ -43,7 +43,7 @@ class FireWatchApp:
         header = tk.Frame(root, bg="#101d30", padx=20, pady=14)
         header.pack(fill="x")
         ttk.Label(header, text="FIREWATCH AI", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(header, text="V2 • Conditional workflow • Evidence quality • Human review", style="Hero.TLabel").pack(anchor="w")
+        ttk.Label(header, text="V3 • Pilot evaluation • Baseline comparison • Evidence traceability", style="Hero.TLabel").pack(anchor="w")
         tk.Label(header, text="EDUCATIONAL PROTOTYPE  |  Synthetic examples  |  No independent fire diagnosis",
                  bg="#101d30", fg="#ffcb77", font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 0))
         cards = tk.Frame(root, bg="#edf1f5", padx=15, pady=10)
@@ -71,17 +71,15 @@ class FireWatchApp:
                 self.build_workflow_canvas(tab)
             if name == "Safety & Human Gate":
                 self.build_review(tab)
+            if name == "Evidence":
+                self.build_evidence_panel(tab)
             if name == "Explainable Report":
                 bar = ttk.Frame(tab)
                 bar.pack(fill="x", padx=10, pady=5)
                 ttk.Button(bar, text="Export TXT report", command=self.export_report).pack(side="left")
                 ttk.Button(bar, text="Export run JSON", command=self.export_run).pack(side="left", padx=8)
             if name == "Evaluation":
-                bar = ttk.Frame(tab)
-                bar.pack(fill="x", padx=10, pady=5)
-                self.eval_button = ttk.Button(bar, text="Run 10 synthetic scenarios", command=self.run_evaluation)
-                self.eval_button.pack(side="left")
-                ttk.Button(bar, text="Export evaluation JSON", command=self.export_evaluation).pack(side="left", padx=8)
+                self.build_evaluation_panel(tab)
             output = ScrolledText(tab, wrap="word", bg="#ffffff", fg="#182c43",
                                   font=("Consolas", 10), padx=12, pady=10, relief="flat")
             output.pack(fill="both", expand=True, padx=10, pady=8)
@@ -99,6 +97,136 @@ class FireWatchApp:
         self.description.bind("<<Modified>>", self.description_changed)
         self.description.edit_modified(False)
         root.after(100, self.poll)
+
+    def build_evidence_panel(self, tab):
+        self.evidence_note = tk.StringVar(value="No analysis selected. Completeness is not confidence or source verification.")
+        ttk.Label(tab, textvariable=self.evidence_note, wraplength=950).pack(anchor="w", padx=12, pady=8)
+        frame = ttk.Frame(tab)
+        frame.pack(fill="x", padx=10)
+        columns = ("source", "provenance", "method", "timestamp", "flags")
+        self.evidence_tree = ttk.Treeview(frame, columns=columns, show="headings", height=4)
+        for key, title, width in (("source", "Declared source", 220), ("provenance", "Provenance", 95),
+                                  ("method", "Method", 70), ("timestamp", "Observed at", 210), ("flags", "Checks", 170)):
+            self.evidence_tree.heading(key, text=title)
+            self.evidence_tree.column(key, width=width, minwidth=60)
+        vertical = ttk.Scrollbar(frame, orient="vertical", command=self.evidence_tree.yview)
+        vertical.pack(side="right", fill="y")
+        self.evidence_tree.configure(yscrollcommand=vertical.set)
+        self.evidence_tree.pack(fill="x")
+        horizontal = ttk.Scrollbar(tab, orient="horizontal", command=self.evidence_tree.xview)
+        horizontal.pack(fill="x", padx=10)
+        self.evidence_tree.configure(xscrollcommand=horizontal.set)
+
+    def show_evidence(self, result):
+        self.evidence_tree.delete(*self.evidence_tree.get_children())
+        quality = result.evidence_quality
+        label = (f"Indicator fields known: {quality.known_indicator_fields}/3 ({quality.completeness}). "
+                 if quality else "No V2/V3 quality summary in this older run. ")
+        self.evidence_note.set(label + "Provenance is declared; completeness does not verify source truth.")
+        checked = result.evidence_result
+        for record in result.incident.evidence:
+            flags = []
+            if record.id in checked.stale_ids: flags.append("old")
+            if record.id in checked.future_ids: flags.append("future time")
+            if record.id in checked.conflicts: flags.append("conflict flagged")
+            self.evidence_tree.insert("", "end", iid=record.id,
+                                      values=(record.source, record.provenance, record.method,
+                                              record.observed_at.isoformat(), ", ".join(flags) or "No timestamp/conflict flag"))
+
+    def build_evaluation_panel(self, tab):
+        bar = ttk.Frame(tab)
+        bar.pack(fill="x", padx=10, pady=5)
+        self.eval_button = ttk.Button(bar, text="Run pilot (10 cases × 2 trials)", command=self.run_evaluation)
+        self.eval_button.pack(side="left")
+        ttk.Button(bar, text="Export JSON", command=self.export_evaluation).pack(side="left", padx=6)
+        ttk.Button(bar, text="Export CSV", command=self.export_evaluation_csv).pack(side="left")
+        cards = ttk.Frame(tab)
+        cards.pack(fill="x", padx=10, pady=4)
+        self.eval_metrics_vars = {}
+        for key in ("System matches", "Checklist matches", "Missed / extra reviews", "Repeated decisions"):
+            column = len(self.eval_metrics_vars)
+            cards.columnconfigure(column, weight=1, uniform="evaluation")
+            frame = ttk.Frame(cards)
+            frame.grid(row=0, column=column, sticky="ew", padx=3)
+            ttk.Label(frame, text=key, font=("Segoe UI", 9), wraplength=150).pack(anchor="w")
+            var = tk.StringVar(value="—")
+            self.eval_metrics_vars[key] = var
+            ttk.Label(frame, textvariable=var, font=("Segoe UI", 15, "bold")).pack(anchor="w")
+        self.eval_note = tk.StringVar(value="Synthetic reference labels. Checklist is executable code, not measured human judgment.")
+        ttk.Label(tab, textvariable=self.eval_note, wraplength=950).pack(anchor="w", padx=12, pady=4)
+        history = ttk.Frame(tab)
+        history.pack(fill="x", padx=10, pady=4)
+        self.eval_history_var = tk.StringVar()
+        self.eval_history = ttk.Combobox(history, textvariable=self.eval_history_var, state="readonly")
+        self.eval_history.pack(side="left", fill="x", expand=True)
+        ttk.Button(history, text="Load saved pilot", command=self.load_pilot).pack(side="left", padx=6)
+        ttk.Button(history, text="Open selected analysis", command=self.open_evaluation_case).pack(side="left")
+        table = ttk.Frame(tab)
+        table.pack(fill="x", padx=10, pady=4)
+        columns = ("scenario", "assessment", "risk", "review", "system", "baseline", "repeat")
+        self.eval_tree = ttk.Treeview(table, columns=columns, show="headings", height=4)
+        for key, title, width in (("scenario", "Synthetic case", 250), ("assessment", "Assessment", 150),
+                                  ("risk", "Priority", 120), ("review", "Review", 75), ("system", "System", 65),
+                                  ("baseline", "Checklist", 70), ("repeat", "Repeat", 65)):
+            self.eval_tree.heading(key, text=title)
+            self.eval_tree.column(key, width=width, minwidth=50)
+        vertical = ttk.Scrollbar(table, orient="vertical", command=self.eval_tree.yview)
+        vertical.pack(side="right", fill="y")
+        self.eval_tree.configure(yscrollcommand=vertical.set)
+        self.eval_tree.pack(fill="x")
+        horizontal = ttk.Scrollbar(tab, orient="horizontal", command=self.eval_tree.xview)
+        horizontal.pack(fill="x", padx=10)
+        self.eval_tree.configure(xscrollcommand=horizontal.set)
+        self.eval_tree.tag_configure("pass", background="#e2f0e8")
+        self.eval_tree.tag_configure("fail", background="#fff0d4")
+        self.eval_tree.bind("<<TreeviewSelect>>", self.evaluation_case_selected)
+
+    def show_evaluation(self, data):
+        self.evaluation = data
+        metrics, total = data["metrics"], data["total"]
+        self.eval_metrics_vars["System matches"].set(f"{metrics['system_case_matches']}/{total}")
+        self.eval_metrics_vars["Checklist matches"].set(f"{metrics['baseline_case_matches']}/{total}")
+        self.eval_metrics_vars["Missed / extra reviews"].set(f"{metrics['system_missed_reviews']} / {metrics['system_extra_reviews']}")
+        self.eval_metrics_vars["Repeated decisions"].set(f"{metrics['reproducible_cases']}/{total}")
+        self.eval_note.set(f"Citation ID occurrences valid: {metrics['valid_citation_ids']}/{metrics['citation_ids_checked']} (truth not verified). "
+                           f"Trace run IDs valid: {metrics['valid_trace_run_ids']}/{metrics['completed_runs']}. "
+                           f"Expected reviews: {metrics['expected_reviews']}; system required: {metrics['system_required_reviews']}. "
+                           f"Checklist missed/extra reviews: {metrics['baseline_missed_reviews']}/{metrics['baseline_extra_reviews']}. "
+                           f"Mean pipeline time: {metrics['mean_duration_ms']:.2f} ms. Synthetic protocol only.")
+        self.eval_tree.delete(*self.eval_tree.get_children())
+        for index, row in enumerate(data["rows"]):
+            actual = row["actual"]
+            self.eval_tree.insert("", "end", iid=str(index), tags=("pass" if row["passed"] else "fail",),
+                                  values=(row["scenario"], actual["assessment"], actual["risk"],
+                                          "Required" if actual["human_review"] else "Optional",
+                                          "Match" if row["passed"] else "Mismatch",
+                                          "Match" if row["baseline_passed"] else "Mismatch",
+                                          "Stable" if row["reproducible"] else "Changed"))
+        self.set_output("Evaluation", data["baseline_description"] + "\n\n" + data["limitation"]
+                        + "\n\nSelect a row to inspect expected/actual fields and trial IDs.")
+
+    def evaluation_case_selected(self, _):
+        selection = self.eval_tree.selection()
+        if selection and self.evaluation:
+            row = self.evaluation["rows"][int(selection[0])]
+            self.set_output("Evaluation", json.dumps(row, indent=2, ensure_ascii=False))
+
+    def open_evaluation_case(self):
+        selection = self.eval_tree.selection()
+        if not selection or not self.evaluation or self.busy:
+            return
+        row = self.evaluation["rows"][int(selection[0])]
+        result = self.store.load(row["run_id"])
+        self.fill(result.incident)
+        self.display(result)
+        self.tabs.select(1)
+        self.status.set(f"Loaded pilot analysis for {row['scenario']}; editing requires a new analysis.")
+
+    def load_pilot(self):
+        evaluation_id = self.eval_history_map.get(self.eval_history_var.get())
+        if evaluation_id and not self.busy:
+            self.show_evaluation(self.store.load_evaluation(evaluation_id).model_dump(mode="json"))
+            self.status.set("Saved pilot evaluation loaded.")
 
     def build_workflow_canvas(self, tab):
         panel = ttk.Frame(tab)
@@ -171,6 +299,9 @@ class FireWatchApp:
                     self.set_output(name, "Input changed. Run Analyze Incident or load a saved run.")
             for box in self.flow_boxes.values():
                 self.flow_canvas.itemconfigure(box, fill="white")
+            if hasattr(self, "evidence_tree"):
+                self.evidence_tree.delete(*self.evidence_tree.get_children())
+                self.evidence_note.set("Input changed; analyze again to inspect evidence.")
 
     def build_form(self):
         bar = ttk.Frame(self.incident_tab)
@@ -289,7 +420,8 @@ class FireWatchApp:
         self.busy = True
         self.run_button.configure(state="disabled")
         self.eval_button.configure(state="disabled")
-        self.status.set("Working — interface remains available. Gemini may take up to several minutes with retries.")
+        self.status.set("Running synthetic pilot — 10 cases, two deterministic trials each."
+                        if kind == "evaluation" else "Analyzing incident — interface remains available.")
         def work():
             try:
                 self.messages.put((kind, fn(), None))
@@ -344,10 +476,8 @@ class FireWatchApp:
                         self.input_changed()
                         self.status.set("Result saved for the earlier input. Current form changed; analyze again or load the saved run.")
                 else:
-                    self.evaluation = value
-                    self.set_output("Evaluation", f"{value['passed']}/{value['total']} synthetic scenarios matched project labels.\n"
-                                    + value["limitation"] + "\n\n" + json.dumps(value, indent=2))
-                    self.status.set("Synthetic evaluation completed and runs saved.")
+                    self.show_evaluation(value)
+                    self.status.set("Pilot complete: 10 synthetic cases, 20 saved runs and persisted comparison metrics.")
                 self.refresh_history()
         except queue.Empty:
             pass
@@ -371,6 +501,7 @@ class FireWatchApp:
                     "analysis": result.evidence_result.model_dump(),
                     "quality": result.evidence_quality.model_dump() if result.evidence_quality else "Not recorded by this older version"}
         self.set_output("Evidence", json.dumps(evidence, indent=2, ensure_ascii=False))
+        self.show_evidence(result)
         self.set_output("Explainable Report", result.report)
         self.set_output("Agent Trace", "\n".join(e.model_dump_json() for e in result.trace))
         self.refresh_flow(result.graph_steps)
@@ -403,6 +534,10 @@ class FireWatchApp:
         self.history.configure(values=list(self.history_map))
         if self.history_map:
             self.history_var.set(next(iter(self.history_map)))
+        self.eval_history_map = {f"{at} | {evaluation_id}": evaluation_id for evaluation_id, at in self.store.evaluations()}
+        self.eval_history.configure(values=list(self.eval_history_map))
+        if self.eval_history_map:
+            self.eval_history_var.set(next(iter(self.eval_history_map)))
 
     def load_history(self):
         run_id = self.history_map.get(self.history_var.get())
@@ -435,6 +570,10 @@ class FireWatchApp:
     def export_evaluation(self):
         if self.evaluation:
             self.write_export(json.dumps(self.evaluation, indent=2), ".json")
+
+    def export_evaluation_csv(self):
+        if self.evaluation:
+            self.write_export(evaluation_csv(self.evaluation), ".csv")
 
 
 def launch(data_dir="data"):

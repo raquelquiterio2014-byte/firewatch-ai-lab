@@ -211,3 +211,68 @@ class SharedState(Model):
             "orchestrator": result.orchestrator,
             "evidence_quality": result.evidence_quality.model_dump(mode="json") if result.evidence_quality else None,
         })
+
+
+class EvaluationDecision(Model):
+    assessment: FireStatus
+    risk: RiskLevel
+    human_review: bool
+
+
+class EvaluationTrial(Model):
+    run_id: str
+    actual: EvaluationDecision
+    duration_ms: float = Field(ge=0)
+
+
+class EvaluationCase(Model):
+    scenario: str
+    expected: EvaluationDecision
+    actual: EvaluationDecision
+    field_agreement: dict[str, bool]
+    passed: bool
+    run_id: str
+    duration_ms: float = Field(ge=0)
+    baseline: EvaluationDecision
+    baseline_field_agreement: dict[str, bool]
+    baseline_passed: bool
+    trials: list[EvaluationTrial] = Field(min_length=2)
+    reproducible: bool
+    valid_citation_ids: int = Field(ge=0)
+    citation_ids_checked: int = Field(ge=0)
+
+
+class EvaluationMetrics(Model):
+    cases: int = Field(ge=0)
+    system_case_matches: int = Field(ge=0)
+    baseline_case_matches: int = Field(ge=0)
+    system_field_matches: dict[str, int]
+    baseline_field_matches: dict[str, int]
+    expected_reviews: int = Field(ge=0)
+    system_required_reviews: int = Field(ge=0)
+    system_missed_reviews: int = Field(ge=0)
+    system_extra_reviews: int = Field(ge=0)
+    baseline_missed_reviews: int = Field(ge=0)
+    baseline_extra_reviews: int = Field(ge=0)
+    reproducible_cases: int = Field(ge=0)
+    valid_citation_ids: int = Field(ge=0)
+    citation_ids_checked: int = Field(ge=0)
+    valid_trace_run_ids: int = Field(ge=0)
+    completed_runs: int = Field(ge=0)
+    mean_duration_ms: float = Field(ge=0)
+
+
+class PilotEvaluation(Model):
+    evaluation_id: str
+    evaluated_at: datetime
+    version: str = "3.0.0"
+    rules_version: str = "educational-1.0"
+    mode: Literal["deterministic"] = "deterministic"
+    synthetic: Literal[True] = True
+    repetitions: int = Field(ge=2, le=5)
+    baseline_description: str
+    total: int = Field(ge=0)
+    passed: int = Field(ge=0)
+    metrics: EvaluationMetrics
+    rows: list[EvaluationCase]
+    limitation: str

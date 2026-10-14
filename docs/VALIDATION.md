@@ -1,4 +1,8 @@
-# Validation record — V2
+# Validation record — V3
+
+## V3 increment
+
+Local suite: **43 tests passed** with Python 3.12, LangGraph 1.2.15 and Pydantic 2.14.1. The synthetic pilot reports system 10/10, executable checklist 7/10, system missed/extra reviews 0/0, repeated decisions 10/10, first-trial citation occurrences 30/30 and trace run IDs 20/20. Its sample export is [v3_evaluation_result.json](v3_evaluation_result.json). See [V3_WINDOWS.md](V3_WINDOWS.md) for metric meanings and Windows acceptance checks. No V3 visual or live-provider acceptance is claimed here.
 
 ## V2 increment
 
