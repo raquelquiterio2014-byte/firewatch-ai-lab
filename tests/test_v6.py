@@ -251,7 +251,7 @@ class BundleTests(unittest.TestCase):
     def test_legacy_evidence_snapshots_still_load_under_v6(self):
         from firewatch.models import RunResult
         root = Path(__file__).resolve().parents[1]
-        data = json.loads((root / "docs/evidence/windows-2026-10-14/v4-gemini-case03.json").read_text())
+        data = json.loads((root / "docs/evidence/windows-2026-10-14/v4-gemini-case03.json").read_text(encoding="utf-8"))
         data.pop("human_reviews", None)
         run = RunResult.model_validate(data)
         self.assertEqual(run.mode, "llm")
@@ -271,7 +271,7 @@ class V6CommandTests(unittest.TestCase):
                     "--output", str(root/"comparison.json"), "--csv", str(root/"comparison.csv"),
                     "--report", str(root/"report.txt"), "--bundle", str(root/"evidence.zip")]
             self.assertEqual(self.invoke(args), 0)
-            self.assertEqual(validate_comparison(json.loads((root/"comparison.json").read_text())).metrics.pairs, 1)
+            self.assertEqual(validate_comparison(json.loads((root/"comparison.json").read_text(encoding="utf-8"))).metrics.pairs, 1)
             self.assertTrue((root/"comparison.csv").exists())
             self.assertTrue(zipfile.is_zipfile(root/"evidence.zip"))
             network.assert_not_called()
