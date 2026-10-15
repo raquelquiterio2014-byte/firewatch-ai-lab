@@ -13,6 +13,8 @@ from .integration import check_gemini
 from .models import (Evidence, EvaluationDecision, FireContext, HumanAssessment,
                      HumanReview, Incident, SharedState, ShadowDataset)
 from .research import human_comparison, human_comparison_csv, run_shadow
+from .comparison import compare, comparison_csv, comparison_report
+from .bundle import comparison_bundle
 from .pipeline import Pipeline
 from .presentation import agent_summary
 from .scenarios import SCENARIOS, get_scenario
@@ -34,8 +36,10 @@ class FireWatchApp:
         self.context_fields = {}
         self.shadow_dataset = None
         self.shadow_analysis = None
+        self.comparison = None
+        self.comparison_cancel = threading.Event()
         self.gemini_model = tk.StringVar(value=configured_model())
-        root.title("FireWatch AI — V5 | Context & Retrospective Analysis")
+        root.title("FireWatch AI — V6 | Comparative Evaluation & Evidence Bundles")
         root.geometry("1120x760")
         root.minsize(760, 560)
         root.configure(bg="#101d30")
@@ -51,7 +55,7 @@ class FireWatchApp:
         header = tk.Frame(root, bg="#101d30", padx=20, pady=14)
         header.pack(fill="x")
         ttk.Label(header, text="FIREWATCH AI", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(header, text="V5 • Evidence-linked context • Recorded human judgments • Shadow Mode", style="Hero.TLabel").pack(anchor="w")
+        ttk.Label(header, text="V6 • Paired evaluation • Audited execution modes • Exportable evidence bundles", style="Hero.TLabel").pack(anchor="w")
         tk.Label(header, text="EDUCATIONAL PROTOTYPE  |  Synthetic examples  |  No independent fire diagnosis",
                  bg="#101d30", fg="#ffcb77", font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 0))
         cards = tk.Frame(root, bg="#edf1f5", padx=15, pady=10)
@@ -70,7 +74,7 @@ class FireWatchApp:
         self.tabs.add(self.incident_tab, text="Incident")
         self.build_form()
         self.outputs = {}
-        for name in ("Multi-Agent Analysis", "Workflow", "Evidence", "Safety & Human Gate", "Explainable Report", "Agent Trace", "Shared State", "Evaluation", "LLM", "V5"):
+        for name in ("Multi-Agent Analysis", "Workflow", "Evidence", "Safety & Human Gate", "Explainable Report", "Agent Trace", "Shared State", "Evaluation", "LLM", "V5", "V6"):
             tab = ttk.Frame(self.tabs)
             short_labels = {"Multi-Agent Analysis": "Agents",
                             "Explainable Report": "Report", "Agent Trace": "Trace", "Shared State": "State",
@@ -78,6 +82,9 @@ class FireWatchApp:
             self.tabs.add(tab, text=short_labels.get(name, name))
             if name == "V5":
                 self.build_v5_panel(tab)
+                continue
+            if name == "V6":
+                self.build_comparison_panel(tab)
                 continue
             if name == "Workflow":
                 self.build_workflow_canvas(tab)
@@ -116,6 +123,119 @@ class FireWatchApp:
         self.description.bind("<<Modified>>", self.description_changed)
         self.description.edit_modified(False)
         root.after(100, self.poll)
+
+    def build_comparison_panel(self, tab):
+        bar = ttk.Frame(tab)
+        bar.pack(fill="x", padx=8, pady=5)
+        self.comparison_case = tk.StringVar(value=list(SCENARIOS)[2])
+        ttk.Combobox(bar, textvariable=self.comparison_case, values=["All 10 synthetic cases", *SCENARIOS], state="readonly", width=34).pack(side="left", fill="x", expand=True)
+        self.comparison_repetitions = tk.StringVar(value="2")
+        ttk.Label(bar, text="Trials").pack(side="left", padx=4)
+        ttk.Combobox(bar, textvariable=self.comparison_repetitions, values=["1", "2", "3"], state="readonly", width=3).pack(side="left")
+        self.comparison_llm = tk.BooleanVar(value=False)
+        ttk.Checkbutton(bar, text="Candidate uses Gemini", variable=self.comparison_llm).pack(side="left", padx=4)
+        controls = ttk.Frame(tab)
+        controls.pack(fill="x", padx=8, pady=3)
+        self.comparison_button = ttk.Button(controls, text="Run paired comparison", command=self.run_comparison)
+        self.comparison_button.pack(side="left")
+        self.cancel_comparison_button = ttk.Button(controls, text="Stop after current pair", command=self.comparison_cancel.set, state="disabled")
+        self.cancel_comparison_button.pack(side="left", padx=4)
+        self.comparison_note = tk.StringVar(value="Offline replay by default. Gemini sends synthetic observations using the selected model in LLM. Up to 5 agent calls / 10 HTTP attempts per pair; stop takes effect after the current pair.")
+        ttk.Label(tab, textvariable=self.comparison_note, wraplength=950).pack(anchor="w", padx=10, pady=4)
+        history = ttk.Frame(tab)
+        history.pack(fill="x", padx=8, pady=3)
+        self.comparison_history_var = tk.StringVar()
+        self.comparison_history = ttk.Combobox(history, textvariable=self.comparison_history_var, state="readonly")
+        self.comparison_history.pack(side="left", fill="x", expand=True)
+        ttk.Button(history, text="Load comparison", command=self.load_comparison).pack(side="left", padx=4)
+        exports = ttk.Frame(tab)
+        exports.pack(fill="x", padx=8, pady=3)
+        for label, extension in (("Export JSON", ".json"), ("CSV", ".csv"), ("TXT", ".txt"), ("Evidence ZIP", ".zip")):
+            ttk.Button(exports, text=label, command=lambda ext=extension: self.export_comparison(ext)).pack(side="left", padx=2)
+        ttk.Button(exports, text="Open candidate run", command=self.open_comparison_run).pack(side="left", padx=4)
+        table = ttk.Frame(tab)
+        table.pack(fill="x", padx=8, pady=3)
+        columns = ("case", "trial", "mode", "agreement", "review", "critic")
+        self.comparison_tree = ttk.Treeview(table, columns=columns, show="headings", height=4)
+        for key, title, width in (("case", "Synthetic scenario", 260), ("trial", "Trial", 45), ("mode", "Actual mode", 95),
+                                  ("agreement", "Final agreement", 105), ("review", "Candidate review", 130), ("critic", "Critic", 90)):
+            self.comparison_tree.heading(key, text=title)
+            self.comparison_tree.column(key, width=width, minwidth=40)
+        scrollbar = ttk.Scrollbar(table, orient="vertical", command=self.comparison_tree.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.comparison_tree.configure(yscrollcommand=scrollbar.set)
+        self.comparison_tree.pack(fill="x")
+        horizontal = ttk.Scrollbar(tab, orient="horizontal", command=self.comparison_tree.xview)
+        horizontal.pack(fill="x", padx=8)
+        self.comparison_tree.configure(xscrollcommand=horizontal.set)
+        output = ScrolledText(tab, wrap="word", font=("Consolas", 10), height=7)
+        output.pack(fill="both", expand=True, padx=8, pady=5)
+        output.configure(state="disabled")
+        self.outputs["Comparison"] = output
+
+    def run_comparison(self):
+        if self.busy:
+            return
+        use_llm = self.comparison_llm.get()
+        if use_llm and not configuration_status()["key_configured"]:
+            messagebox.showinfo("Gemini comparison", "Configure a key in the launching process, or uncheck Candidate uses Gemini for offline replay.")
+            return
+        try:
+            selected = self.comparison_case.get()
+            numbers = list(range(1, 11)) if selected == "All 10 synthetic cases" else [list(SCENARIOS).index(selected) + 1]
+            repetitions = int(self.comparison_repetitions.get())
+        except ValueError:
+            messagebox.showerror("Comparison", "Select a catalogue case and a trial count.")
+            return
+        model = self.gemini_model.get().strip()
+        self.comparison_cancel.clear()
+        self.start_job("comparison", lambda: compare(self.store, use_llm=use_llm, scenario_numbers=numbers,
+            repetitions=repetitions, model=model, cancel_event=self.comparison_cancel,
+            on_progress=lambda data: self.messages.put(("comparison_progress", data, None))))
+
+    def show_comparison(self, evaluation):
+        from .evaluation import decision_fields
+        self.comparison = evaluation
+        m = evaluation.metrics
+        self.comparison_note.set(f"{evaluation.status} | {evaluation.requested_candidate} | Final agreement {m.final_decision_agreement}/{m.pairs} | Validated provider pairs {m.fully_validated_provider_pairs}/{m.pairs} | Intact runs {m.intact_runs}/{m.runs_checked}. No fire-accuracy claim.")
+        self.comparison_tree.delete(*self.comparison_tree.get_children())
+        for index, row in enumerate(evaluation.rows):
+            self.comparison_tree.insert("", "end", iid=str(index), values=(row.scenario, row.repetition, row.candidate.mode,
+                "Match" if decision_fields(row.reference) == decision_fields(row.candidate) else "Different",
+                "REQUIRED" if row.candidate.safety.human_review_required else "OPTIONAL", row.candidate.critic.verdict))
+        self.set_output("Comparison", comparison_report(evaluation))
+
+    def load_comparison(self):
+        cid = self.comparison_history_map.get(self.comparison_history_var.get())
+        if cid and not self.busy:
+            self.show_comparison(self.store.load_comparison(cid))
+            self.status.set("Saved comparative report restored with its original run links and actual modes.")
+
+    def open_comparison_run(self):
+        selected = self.comparison_tree.selection()
+        if selected and self.comparison and not self.busy:
+            result = self.store.load(self.comparison.rows[int(selected[0])].candidate.run_id)
+            self.fill(result.incident)
+            self.display(result)
+            self.tabs.select(1)
+
+    def export_comparison(self, extension):
+        if not self.comparison or self.busy:
+            return
+        if extension == ".json":
+            self.write_export(self.comparison.model_dump_json(indent=2), extension)
+        elif extension == ".csv":
+            self.write_export(comparison_csv(self.comparison), extension)
+        elif extension == ".txt":
+            self.write_export(comparison_report(self.comparison), extension)
+        else:
+            filename = filedialog.asksaveasfilename(defaultextension=".zip", filetypes=[("Evidence bundle ZIP", "*.zip")])
+            if filename:
+                try:
+                    Path(filename).write_bytes(comparison_bundle(self.comparison, self.store))
+                    self.status.set("Evidence ZIP saved with original runs, human records, traces and checksum manifest.")
+                except (OSError, ValueError, KeyError) as exc:
+                    messagebox.showerror("Bundle export failed", str(exc))
 
     def build_v5_panel(self, tab):
         book = ttk.Notebook(tab)
@@ -483,7 +603,7 @@ class FireWatchApp:
         if not self.busy:
             self.status.set("Input changed — analyze again. Previous results remain saved in history.")
             for name in self.outputs:
-                if name not in ("Evaluation", "LLM", "Shadow"):
+                if name not in ("Evaluation", "LLM", "Shadow", "Comparison"):
                     self.set_output(name, "Input changed. Run Analyze Incident or load a saved run.")
             for box in self.flow_boxes.values():
                 self.flow_canvas.itemconfigure(box, fill="white")
@@ -639,9 +759,12 @@ class FireWatchApp:
         self.eval_button.configure(state="disabled")
         self.provider_button.configure(state="disabled")
         self.shadow_button.configure(state="disabled")
+        self.comparison_button.configure(state="disabled")
+        self.cancel_comparison_button.configure(state="normal" if kind == "comparison" else "disabled")
         self.status.set("Running synthetic pilot — 10 cases, two deterministic trials each."
                         if kind == "evaluation" else "Running offline Shadow Mode at the selected cutoff."
-                        if kind == "shadow" else "Analyzing incident — interface remains available.")
+                        if kind == "shadow" else "Running paired comparison; progress appears after each pair."
+                        if kind == "comparison" else "Analyzing incident — interface remains available.")
         def work():
             try:
                 self.messages.put((kind, fn(), None))
@@ -676,6 +799,9 @@ class FireWatchApp:
         try:
             while True:
                 kind, value, error = self.messages.get_nowait()
+                if kind == "comparison_progress":
+                    self.status.set(f"Comparison: {value['completed_pairs']}/{value['requested_pairs']} pairs | {value['scenario']} | {value['candidate_mode']}")
+                    continue
                 if kind == "progress":
                     self.live_steps.append(value)
                     self.refresh_flow(self.live_steps)
@@ -688,6 +814,8 @@ class FireWatchApp:
                 self.eval_button.configure(state="normal")
                 self.provider_button.configure(state="normal")
                 self.shadow_button.configure(state="normal")
+                self.comparison_button.configure(state="normal")
+                self.cancel_comparison_button.configure(state="disabled")
                 if error:
                     self.status.set(error)
                     messagebox.showerror("Operation failed", error)
@@ -705,6 +833,9 @@ class FireWatchApp:
                 elif kind == "shadow":
                     self.show_shadow(value)
                     self.status.set(f"Shadow analysis saved: {value.shadow_id}; cutoff {value.audit.cutoff.isoformat()}.")
+                elif kind == "comparison":
+                    self.show_comparison(value)
+                    self.status.set(f"Comparison {value.status.lower()}: {value.metrics.pairs} saved pairs. Requested mode and actual audits are shown separately.")
                 else:
                     self.show_evaluation(value)
                     self.status.set("Pilot complete: 10 synthetic cases, 20 saved runs and persisted comparison metrics.")
@@ -779,6 +910,10 @@ class FireWatchApp:
         self.shadow_history.configure(values=list(self.shadow_history_map))
         if self.shadow_history_map:
             self.shadow_history_var.set(next(iter(self.shadow_history_map)))
+        self.comparison_history_map = {f"{at} | {cid}": cid for cid, at in self.store.comparisons()}
+        self.comparison_history.configure(values=list(self.comparison_history_map))
+        if self.comparison_history_map:
+            self.comparison_history_var.set(next(iter(self.comparison_history_map)))
 
     def load_history(self):
         run_id = self.history_map.get(self.history_var.get())

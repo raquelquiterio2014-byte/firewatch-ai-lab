@@ -23,5 +23,6 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - run: python main.py --evaluate --data-dir ci-data --output ci-exports/evaluation.json
       - run: python main.py --shadow examples/v5-shadow-synthetic.json --cutoff 2026-10-14T12:00:00Z --data-dir ci-data --output ci-exports/shadow.json
+      - run: python main.py --compare --repetitions 2 --data-dir ci-data --output ci-exports/v6-comparison.json --csv ci-exports/v6-comparison.csv --report ci-exports/v6-report.txt --bundle ci-exports/v6-evidence.zip
       - if: runner.os == 'Windows'
         run: python -m scripts.gui_smoke

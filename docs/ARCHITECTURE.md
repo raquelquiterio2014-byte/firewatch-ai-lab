@@ -1,4 +1,4 @@
-# FireWatch AI — V5 Architecture
+# FireWatch AI — V6 Architecture
 
 ## Dependent state and real branches
 
@@ -45,6 +45,22 @@ Only eligible evidence content and projected values enter a deterministic Pipeli
 Shadow run and audit snapshots are saved together in one SQLite transaction; JSONL is appended afterward. Immutable shadow history and separate JSON/TXT exports remain available after restart. `ShadowAnalysis` checks that mode is deterministic, cutoff matches analysis time, and run evidence IDs match the inclusion audit. Existing V1–V4 snapshots load with empty/default context fields and no old snapshot is rewritten.
 
 This implementation prepares a research workflow with synthetic demonstrations. Source availability declarations are not authenticated, and no real-case dossiers, sensor stream or operational decision system have been added.
+
+## V6 paired comparison and portable dossiers
+
+`ComparisonTrial` retains both completed RunResult snapshots, the authored expected label, repetition and input SHA-256. Paired runs have distinct IDs and identical incident/time inputs. `ComparativeEvaluation` validates unique cases/trials/run IDs, complete/cancelled status, denominators and fixed input/time across repetitions. `validate_comparison` also recomputes checksums and all metrics from the saved run snapshots before persistence, report generation or bundle export.
+
+The offline default compares deterministic execution against a deterministic replay. Explicit hybrid comparison uses the audited V4/V5 adapter for the candidate only; the reference never invokes a provider. The report compares final reference classifications and Safety-Gate review separately from the candidate's draft proposal. Additional retained LLM review can change final agreement without changing rule-based fire assessment or contextual priority.
+
+Provider coverage requires all three audited components (Planner, Decision, Critic), source `gemini_api`, successful calls and validated output, with no fallback. Injected gateways have a different source. Missing key may still have source `gemini_api` but zero HTTP attempts, no successful provider pair and an explicit MISSING_KEY error. Transport mocks in tests validate counting/contracts, not live Gemini access. Tokens are summed only from provider-source audit records, with each reported category kept separate; they are not costs or calibrated confidence.
+
+Integrity checks inspect original trace and graph run IDs, cited evidence IDs, rejected unresolved proposal differences and retained review requirements. Reports show issues rather than treating a bad trace as valid. Agreement/repeatability and timing remain synthetic protocol measurements. One trial has no repeatability denominator. Human comparisons continue separately from checklist/reference labels.
+
+Each paired run is saved when complete. A final or explicitly cancelled comparative evaluation then references those existing snapshots and is saved append-only in `comparative_evaluations`. Cancellation is checked at pair boundaries; a current pair can finish its bounded API requests. Exceptions or process closure can leave completed run snapshots without a final comparison. There is no resume/checkpoint implementation.
+
+The GUI worker sends progress messages after pairs; only the Tk thread updates widgets. The V6 panel's saved comparison stays tied to its original synthetic protocol if incident form inputs change. Opening a candidate loads its saved run, never recomputes it. Automated Windows checks initialize the 12 main tabs, exercise V5/V6 interactions, and refresh three window sizes; manual visual readability remains separate.
+
+`comparison_bundle` revalidates the comparative record and matches each embedded run against SQLite. It emits comparison JSON/CSV/TXT, original run snapshots with export-time human approvals/judgments, a concatenated JSONL trace and a manifest of file SHA-256 checksums. Numeric archive paths prevent run-ID text from becoming filesystem paths. The manifest detects alterations but does not authenticate source declarations, reviewer identity or actual provider network activity independently of the supplied audits.
 
 ## Evidence quality
 

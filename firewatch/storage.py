@@ -1,4 +1,5 @@
 import sqlite3
+import json
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -29,6 +30,8 @@ class Store:
                     run_id TEXT NOT NULL REFERENCES runs(id), snapshot TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS shadow_analyses(id TEXT PRIMARY KEY,
                     run_id TEXT NOT NULL REFERENCES runs(id), executed_at TEXT NOT NULL, snapshot TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS comparative_evaluations(id TEXT PRIMARY KEY,
+                    created_at TEXT NOT NULL, snapshot TEXT NOT NULL);
             """)
 
     @contextmanager
@@ -146,3 +149,27 @@ class Store:
         with self.connect() as db:
             row = db.execute("SELECT snapshot FROM provider_checks ORDER BY created_at DESC LIMIT 1").fetchone()
         return LLMCallRecord.model_validate_json(row[0]) if row else None
+
+    def save_comparison(self, evaluation):
+        from .comparison import validate_comparison
+        evaluation = validate_comparison(evaluation)
+        with self.connect() as db:
+            for row in evaluation.rows:
+                for result in (row.reference, row.candidate):
+                    saved = db.execute("SELECT snapshot FROM runs WHERE id=?", (result.run_id,)).fetchone()
+                    if saved is None or RunResult.model_validate_json(saved[0]) != result:
+                        raise ValueError("Comparison must reference its existing saved runs")
+            db.execute("INSERT INTO comparative_evaluations VALUES (?, ?, ?)",
+                       (evaluation.comparison_id, evaluation.evaluated_at.isoformat(), evaluation.model_dump_json()))
+
+    def load_comparison(self, comparison_id):
+        from .comparison import validate_comparison
+        with self.connect() as db:
+            row = db.execute("SELECT snapshot FROM comparative_evaluations WHERE id=?", (comparison_id,)).fetchone()
+        if row is None:
+            raise KeyError("Comparison not found")
+        return validate_comparison(json.loads(row[0]))
+
+    def comparisons(self, limit=30):
+        with self.connect() as db:
+            return db.execute("SELECT id, created_at FROM comparative_evaluations ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()

@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from firewatch.gui import FireWatchApp
 from firewatch.pipeline import Pipeline
 from firewatch.research import run_shadow
+from firewatch.comparison import compare
+from firewatch.bundle import comparison_bundle
 
 
 def main():
@@ -14,7 +16,7 @@ def main():
         root.withdraw()
         try:
             app = FireWatchApp(root, directory)
-            assert len(app.tabs.tabs()) == 11
+            assert len(app.tabs.tabs()) == 12
             app.context_fields["slope_deg"].set("15")
             incident = app.collect()
             assert incident.context.slope_deg == 15
@@ -33,13 +35,26 @@ def main():
             app.load_shadow_demo()
             shadow = run_shadow(app.shadow_dataset, datetime(2026, 10, 14, 12, tzinfo=timezone.utc), store=app.store)
             app.show_shadow(shadow)
+            comparison = compare(app.store, scenario_numbers=[3], repetitions=2)
+            app.show_comparison(comparison)
+            assert len(app.comparison_tree.get_children()) == 2
+            assert comparison.metrics.fully_validated_provider_pairs == 0
+            assert comparison_bundle(comparison, app.store)
             app.refresh_history()
             assert app.shadow_history_map
+            assert app.comparison_history_map
+            app.comparison_tree.selection_set("0")
+            app.open_comparison_run()
+            assert app.current.run_id == comparison.rows[0].candidate.run_id
+            # Refresh all controls at several CI window sizes. This does not assess human readability.
+            for size in ("760x560", "1120x760", "1440x900"):
+                root.geometry(size)
+                root.update_idletasks()
             app.context_fields["slope_deg"].set("20")
             assert app.current is None
             assert app.card_vars["Mode"].get() == "PENDING"
             root.update_idletasks()
-            print("V5 GUI construction and interactions: OK (automated fixture, layout acceptance pending)")
+            print("V6 GUI construction, comparison, bundles and window-size refresh: OK (manual layout acceptance pending)")
         finally:
             root.destroy()
 

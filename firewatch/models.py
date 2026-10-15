@@ -414,3 +414,84 @@ class PilotEvaluation(Model):
     metrics: EvaluationMetrics
     rows: list[EvaluationCase]
     limitation: str
+
+
+class ComparisonTrial(Model):
+    scenario: str
+    repetition: int = Field(ge=1, le=3)
+    input_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected: EvaluationDecision
+    reference: RunResult
+    candidate: RunResult
+
+    @model_validator(mode="after")
+    def same_input_and_time(self):
+        if self.reference.run_id == self.candidate.run_id:
+            raise ValueError("Comparison requires distinct run IDs")
+        if self.reference.mode != "deterministic" or self.reference.llm_calls:
+            raise ValueError("Comparison reference must be deterministic")
+        if self.reference.incident != self.candidate.incident or self.reference.created_at != self.candidate.created_at:
+            raise ValueError("Paired comparison inputs and analysis times must match")
+        return self
+
+
+class ComparisonMetrics(Model):
+    pairs: int = Field(ge=0)
+    final_decision_agreement: int = Field(ge=0)
+    reference_label_matches: int = Field(ge=0)
+    candidate_label_matches: int = Field(ge=0)
+    candidate_more_reviews: int = Field(ge=0)
+    candidate_removed_reviews: int = Field(ge=0)
+    candidate_proposal_differences: int = Field(ge=0)
+    candidate_modes: dict[str, int]
+    fully_validated_provider_pairs: int = Field(ge=0)
+    source_call_counts: dict[str, int]
+    candidate_error_codes: dict[str, int]
+    provider_http_attempts: int = Field(ge=0)
+    provider_token_usage: dict[str, int]
+    intact_runs: int = Field(ge=0)
+    runs_checked: int = Field(ge=0)
+    mean_reference_ms: float = Field(ge=0)
+    mean_candidate_ms: float = Field(ge=0)
+    candidate_stable_cases: int = Field(ge=0)
+    repeated_cases_checked: int = Field(ge=0)
+
+
+class ComparativeEvaluation(Model):
+    comparison_id: str = Field(default_factory=lambda: str(uuid4()))
+    evaluated_at: datetime = Field(default_factory=now)
+    version: str = "6.0.0"
+    synthetic: Literal[True] = True
+    requested_candidate: Literal["deterministic_replay", "gemini_hybrid"]
+    requested_model: str | None = None
+    scenarios: list[str] = Field(min_length=1, max_length=10)
+    repetitions: int = Field(ge=1, le=3)
+    status: Literal["COMPLETE", "CANCELLED"]
+    rows: list[ComparisonTrial] = Field(max_length=30)
+    metrics: ComparisonMetrics
+    limitation: str = "Authored synthetic labels, not fire accuracy. Assessment and priority remain rule-based in both modes; hybrid reasoning concerns routing, proposals and critique. Reported provider access requires successful gemini_api audit records; injected fixtures and fallback are separate. Token counts are provider reports, not billing estimates. Human judgments are separate, never inferred from labels."
+
+    @model_validator(mode="after")
+    def complete_unique_pairs(self):
+        ids = [run.run_id for row in self.rows for run in (row.reference, row.candidate)]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Comparison run IDs must be globally unique")
+        keys = [(r.scenario, r.repetition) for r in self.rows]
+        if len(keys) != len(set(keys)) or len(self.scenarios) != len(set(self.scenarios)):
+            raise ValueError("Comparison cases and trial keys must be unique")
+        if any(r.scenario not in self.scenarios or r.repetition > self.repetitions for r in self.rows):
+            raise ValueError("Comparison row is outside the requested protocol")
+        if self.status == "COMPLETE" and len(self.rows) != len(self.scenarios) * self.repetitions:
+            raise ValueError("Complete comparison must contain all requested pairs")
+        if self.metrics.pairs != len(self.rows) or self.metrics.runs_checked != 2 * len(self.rows):
+            raise ValueError("Comparison metric denominators must match paired runs")
+        inputs = {}
+        for row in self.rows:
+            signature = (row.input_sha256, row.reference.created_at)
+            if row.scenario in inputs and inputs[row.scenario] != signature:
+                raise ValueError("Repeated trials must use the same input and analysis time")
+            inputs[row.scenario] = signature
+        if self.requested_candidate == "deterministic_replay" and any(
+                r.candidate.mode != "deterministic" or r.candidate.llm_calls for r in self.rows):
+            raise ValueError("Offline replay cannot claim hybrid or provider execution")
+        return self

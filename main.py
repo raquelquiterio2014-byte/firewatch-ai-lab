@@ -12,6 +12,8 @@ from firewatch.storage import Store
 from firewatch.models import ShadowDataset
 from firewatch.research import run_shadow
 from firewatch.v5_demo import shadow_demo
+from firewatch.comparison import compare, comparison_csv, comparison_report
+from firewatch.bundle import comparison_bundle
 
 
 def main():
@@ -21,14 +23,46 @@ def main():
     parser.add_argument("--llm", action="store_true", help="Use optional Gemini for a single CLI scenario")
     parser.add_argument("--output", type=Path, help="Write CLI output JSON")
     parser.add_argument("--data-dir", default="data", help="SQLite and trace destination")
-    parser.add_argument("--repetitions", type=int, choices=range(2, 6), default=2, help="Decision-stability trials per evaluation case")
+    parser.add_argument("--repetitions", type=int, choices=range(1, 6), default=2, help="Pilot: 2–5 trials; paired comparison: 1–3 trials")
     parser.add_argument("--csv", type=Path, help="Write per-scenario CSV for --evaluate")
     parser.add_argument("--check-gemini", action="store_true", help="Explicit provider JSON probe, without incident observations")
     parser.add_argument("--model", help="Gemini model override for --llm or --check-gemini")
     parser.add_argument("--shadow", type=Path, help="Analyze a normalized shadow dataset JSON offline")
     parser.add_argument("--shadow-demo", action="store_true", help="Run the V5 synthetic cutoff demo offline")
     parser.add_argument("--cutoff", help="Shadow decision cutoff, ISO 8601 with timezone")
+    parser.add_argument("--compare", action="store_true", help="V6 paired comparison; offline replay unless --llm is explicit")
+    parser.add_argument("--compare-cases", help="Comma-separated synthetic scenario numbers (default: all ten)")
+    parser.add_argument("--report", type=Path, help="Write paired comparison TXT report")
+    parser.add_argument("--bundle", type=Path, help="Write paired comparison evidence ZIP")
     args = parser.parse_args()
+    if args.compare:
+        if args.evaluate or args.scenario or args.check_gemini or args.shadow or args.shadow_demo or args.cutoff:
+            parser.error("--compare is separate from pilot, scenario, probe and Shadow Mode")
+        if args.repetitions > 3:
+            parser.error("Paired comparison supports 1–3 repetitions")
+        try:
+            numbers = [int(n.strip()) for n in args.compare_cases.split(",")] if args.compare_cases else None
+            store = Store(args.data_dir)
+            evaluation = compare(store, use_llm=args.llm, scenario_numbers=numbers, repetitions=args.repetitions, model=args.model)
+        except (ValueError, OSError) as exc:
+            parser.error(str(exc))
+        for path, content in ((args.output, evaluation.model_dump_json(indent=2)),
+                              (args.csv, comparison_csv(evaluation)), (args.report, comparison_report(evaluation))):
+            if path:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content + "\n", encoding="utf-8-sig" if path == args.csv else "utf-8")
+        if args.bundle:
+            args.bundle.parent.mkdir(parents=True, exist_ok=True)
+            args.bundle.write_bytes(comparison_bundle(evaluation, store))
+        print(json.dumps({"comparison_id": evaluation.comparison_id, "requested_candidate": evaluation.requested_candidate,
+                          "status": evaluation.status, "metrics": evaluation.metrics.model_dump()}, indent=2))
+        if evaluation.metrics.intact_runs != evaluation.metrics.runs_checked or evaluation.metrics.candidate_removed_reviews:
+            return 1
+        return 2 if args.llm and evaluation.metrics.fully_validated_provider_pairs != evaluation.metrics.pairs else 0
+    if args.compare_cases or args.bundle or args.report:
+        parser.error("--compare-cases, --bundle and --report require --compare")
+    if args.evaluate and args.repetitions < 2:
+        parser.error("The original pilot requires at least two repetitions")
     if args.shadow or args.shadow_demo:
         if args.shadow and args.shadow_demo:
             parser.error("Choose --shadow OR --shadow-demo")

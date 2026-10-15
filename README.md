@@ -1,4 +1,4 @@
-# FireWatch AI — V5
+# FireWatch AI — V6
 
 **Educational multi-agent prototype for fire-indicator analysis, evidence traceability and human review.**
 
@@ -10,7 +10,22 @@ FireWatch evaluates **supplied observations** about vegetation and the urban–v
 
 **All four versions (V1, V2, V3 and V4) were tested and validated by Raquel Cruz on Windows, using Windows PowerShell and Python 3.12.10, on 14 October 2026.** This refers to the recorded basic acceptance sequence: automated suites and the interface, workflow, review, export and persistence checks described in the [validation record](docs/VALIDATION.md). V4 also includes a successful live Gemini integration run for synthetic scenario 03.
 
-This validation was performed through **PowerShell on Windows**; execution through PyCharm was not part of this session. Validation is limited to the recorded checks and synthetic observations, without a real-world fire accuracy claim. **V5 is now implemented; its Windows acceptance and live-provider checks are pending. V6 remains planned.**
+This validation was performed through **PowerShell on Windows**; execution through PyCharm was not part of this session. Validation is limited to the recorded checks and synthetic observations, without a real-world fire accuracy claim. **V5 and V6 are implemented; Raquel's manual Windows acceptance and version-specific live-provider checks for these milestones remain pending.** V5's automated GitHub Actions checks passed on Linux and Windows, including basic GUI interactions.
+
+## V6 — Comparative Evaluation and Evidence Bundles
+
+Package version: **6.0.0**. V6 completes this implementation milestone for the synthetic laboratory, adding a dedicated **V6** tab while retaining context, human judgments, Shadow Mode, audited Gemini integration and the original pilot.
+
+- **Paired evaluation:** the same frozen synthetic incident/time is analyzed by a deterministic reference and either a deterministic replay (offline default) or explicitly enabled Gemini hybrid. Select one case or all ten, with one to three trials per case. Each run has its own ID; repeated trials retain the same input hash/time.
+- **Measured differences:** final Safety-Gate decisions, authored-label agreement, draft proposal differences, additional/removed review requests, actual modes, provider coverage, error codes, attempts, reported tokens, pipeline time, repeated decisions and trace/citation integrity. Hybrid assessment and priority remain deterministic; these comparisons do not measure independent LLM fire diagnosis.
+- **Honest provider status:** successful, validated Planner/Decision/Critic audit records from `gemini_api` are required for a fully validated provider pair. Injected offline gateways and fallback are shown separately. An offline replay never appears as Gemini validation.
+- **Portable evidence ZIP:** full comparison JSON, linked CSV, TXT report, original run snapshots, export-time human records, JSONL traces and a SHA-256 manifest. Checksums detect altered files; they do not authenticate source truth or reviewer identity.
+- **Persistence and interruption:** comparisons reload from SQLite after restart. Progress is displayed after each pair. Stop takes effect after the current pair and saves an explicitly CANCELLED partial comparison. Unexpected failure may leave completed runs without a final comparison; history remains available.
+- **Broader Windows automation:** CI exercises widgets, V5/V6 history, opening a compared run, bundles and layout refresh at three window sizes. Human readability and manual acceptance at your own resolution still require local checks.
+
+Development verification: **117 automated tests passed**. The original pilot retains **10/10** synthetic matches. A full offline comparison completed **20/20 agreeing pairs**, **40/40 intact runs**, and **10/10 cases with stable repeated decisions**, with **zero provider attempts**. These are deterministic consistency results, not a real Gemini comparison or real-fire accuracy. [V6 Windows/PowerShell instructions](docs/V6_WINDOWS.md) include separate steps for actual provider validation.
+
+The next research project will be the independent **FireWatch AI — Real Cases**, following ResilientCity AI — Real Cases. It will require sourced dossiers and retrospective availability records. No real-fire catalogue is included here.
 
 ## V5 — Context, Human Comparison and Shadow Mode
 
@@ -24,7 +39,7 @@ Package version: **5.0.0**. The V5 tab contains **Context**, **Human comparison*
 
 Development verification: **92 automated tests passed**, the deterministic pilot remains **10/10** with **7/10** checklist agreement and **10/10** repeatability, and the synthetic cutoff demo was executed. These are development results, not V5 Windows or field acceptance. Follow [V5 Windows/PowerShell checks](docs/V5_WINDOWS.md).
 
-V6 will follow later. An independent **FireWatch AI — Real Cases** project is planned after V5/V6, following the retrospective dossier approach of ResilientCity AI — Real Cases. V5 introduces the offline research mechanism using synthetic demonstrations; no real-fire catalogue has been added.
+V5 introduced the offline research mechanism using synthetic demonstrations; no real-fire catalogue has been added. V6 now consolidates comparison and evidence exports, while the independent real-cases research remains a later project.
 
 ## V4 — Audited Gemini Integration
 
@@ -103,6 +118,7 @@ First use the **LLM** tab and **Test Gemini JSON** with a configured key, then s
 | Eval | Saved pilot dashboard, baseline comparison, repeated trials, per-case inspection and JSON/CSV export |
 | LLM | Requested model, key-configured status, provider JSON probe and per-call audit |
 | V5 | Context output, entered human judgments/comparison and offline Shadow Mode with saved cutoff history |
+| V6 | Paired comparison, actual execution modes, saved reports, cancellation and consolidated evidence ZIP |
 
 The GUI accepts one evidence record per new manual analysis. The backend supports multiple evidence records. Normalized form fields drive the reference rules: free text is **not automatically extracted**. Conflict flags and provenance are entered declarations, not independent verification.
 
