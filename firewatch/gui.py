@@ -928,7 +928,7 @@ class FireWatchApp:
                                                filetypes=[(extension.upper(), "*" + extension)])
         if filename:
             try:
-                Path(filename).write_text(content, encoding="utf-8")
+                Path(filename).write_text(content, encoding="utf-8", newline="")
                 self.status.set("Export saved.")
             except OSError:
                 messagebox.showerror("Export failed", "Cannot write to the selected location.")

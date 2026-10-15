@@ -50,7 +50,7 @@ def main():
                               (args.csv, comparison_csv(evaluation)), (args.report, comparison_report(evaluation))):
             if path:
                 path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(content + "\n", encoding="utf-8-sig" if path == args.csv else "utf-8")
+                path.write_text(content + "\n", encoding="utf-8-sig" if path == args.csv else "utf-8", newline="")
         if args.bundle:
             args.bundle.parent.mkdir(parents=True, exist_ok=True)
             args.bundle.write_bytes(comparison_bundle(evaluation, store))
@@ -104,7 +104,7 @@ def main():
             data = evaluate(store, repetitions=args.repetitions)
             if args.csv:
                 args.csv.parent.mkdir(parents=True, exist_ok=True)
-                args.csv.write_text(evaluation_csv(data), encoding="utf-8-sig")
+                args.csv.write_text(evaluation_csv(data), encoding="utf-8-sig", newline="")
             code = 0 if data["passed"] == data["total"] else 1
         else:
             name = list(SCENARIOS)[args.scenario - 1]

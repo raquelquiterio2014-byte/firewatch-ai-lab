@@ -273,6 +273,7 @@ class V6CommandTests(unittest.TestCase):
             self.assertEqual(self.invoke(args), 0)
             self.assertEqual(validate_comparison(json.loads((root/"comparison.json").read_text(encoding="utf-8"))).metrics.pairs, 1)
             self.assertTrue((root/"comparison.csv").exists())
+            self.assertNotIn(b"\r\r\n", (root/"comparison.csv").read_bytes())
             self.assertTrue(zipfile.is_zipfile(root/"evidence.zip"))
             network.assert_not_called()
 
